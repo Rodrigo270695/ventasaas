@@ -21,7 +21,7 @@ return new class extends Migration
         Schema::create('treasury_payments', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('direction', 20)->default('collection');
-            $table->foreignUuid('party_id')->nullable()->constrained('parties')->nullOnDelete();
+            $table->uuid('party_id')->nullable();
             $table->foreignUuid('payment_method_id')->constrained('treasury_payment_methods')->restrictOnDelete();
             $table->date('payment_date');
             $table->char('currency_code', 3)->default('PEN');
@@ -40,7 +40,7 @@ return new class extends Migration
         Schema::create('treasury_payment_allocations', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('treasury_payment_id')->constrained('treasury_payments')->cascadeOnDelete();
-            $table->foreignUuid('sales_document_id')->constrained('sales_documents')->restrictOnDelete();
+            $table->uuid('sales_document_id');
             $table->decimal('amount', 18, 4);
             $table->timestamps();
 

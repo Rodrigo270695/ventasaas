@@ -22,7 +22,6 @@ import { useOfflineQuotationsIndex } from '@/hooks/use-offline-quotations-index'
 import { ventasCotizacionesIndex } from '@/lib/admin-breadcrumbs';
 import { SALES_QUOTATIONS_PERMISSIONS } from '@/lib/admin-permissions';
 import { isOfflineEntityId } from '@/lib/offline-store';
-import { isOfflineEntityId } from '@/lib/offline-store';
 import type { SalesQuotationIndexPageProps, SalesQuotationListRow } from '@/types/admin/sales-quotations';
 
 const INDEX_URL = '/admin/ventas/cotizaciones';
