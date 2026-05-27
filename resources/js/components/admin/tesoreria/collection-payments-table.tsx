@@ -52,7 +52,8 @@ export function CollectionPaymentsTable({
                 header: 'Fecha',
                 primary: true,
                 sortable: true,
-                sortValue: (row) => row.payment_date,
+                sortValue: (row) =>
+                    row.recorded_at ?? row.payment_date,
                 headerClassName: cn(
                     treasuryAccountsTh,
                     treasuryColPaymentDate,
@@ -62,7 +63,8 @@ export function CollectionPaymentsTable({
                     treasuryAccountsTd,
                     'whitespace-nowrap font-semibold text-[#3b2d4a]',
                 ),
-                cell: (row) => row.payment_date_label,
+                cell: (row) =>
+                    row.recorded_at_label ?? row.payment_date_label,
             },
             {
                 id: 'document',

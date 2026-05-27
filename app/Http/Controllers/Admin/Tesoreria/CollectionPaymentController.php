@@ -36,7 +36,6 @@ class CollectionPaymentController extends Controller
                 'allocations.salesDocument:id,full_number,series,number,total,currency_code',
                 'creator:id,name',
             ])
-            ->orderByDesc('payment_date')
             ->orderByDesc('created_at');
 
         if ($from) {
@@ -177,11 +176,14 @@ class CollectionPaymentController extends Controller
     {
         $allocation = $payment->allocations->first();
         $document = $allocation?->salesDocument;
+        $recordedAt = $payment->created_at?->timezone(config('app.timezone'));
 
         return [
             'id' => $payment->id,
             'payment_date' => $payment->payment_date?->format('Y-m-d'),
             'payment_date_label' => $payment->payment_date?->format('d/m/Y'),
+            'recorded_at' => $recordedAt?->toIso8601String(),
+            'recorded_at_label' => $recordedAt?->format('d/m/Y H:i'),
             'amount' => (string) $payment->amount,
             'amount_label' => number_format((float) $payment->amount, 2, '.', ','),
             'currency_code' => $payment->currency_code,

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { PartyFormModal } from '@/components/admin/socios/party-form-modal';
 import { CollectionPaymentModal } from '@/components/admin/ventas/collection-payment-modal';
+import { SalesDocumentPaymentSummary } from '@/components/admin/ventas/sales-document-payment-status';
 import { SalesDraftDeleteModal } from '@/components/admin/ventas/sales-draft-delete-modal';
 import { SalesQuantityField } from '@/components/admin/ventas/sales-quantity-field';
 import { useCan } from '@/hooks/use-can';
@@ -568,8 +569,6 @@ function OrderSummaryAside({
                             >
                                 {confirming ? (
                                     <Spinner className="size-4" />
-                                ) : isInternal ? (
-                                    'Cobrar y numerar'
                                 ) : (
                                     'Confirmar y numerar'
                                 )}
@@ -2203,6 +2202,19 @@ export function SalesDocumentForm({
                     isInternal={isInternal}
                 />
             ) : null}
+            {document?.status === 'confirmed' &&
+            document.payment_status_label ? (
+                <SalesDocumentPaymentSummary
+                    paymentStatus={document.payment_status}
+                    paymentStatusLabel={document.payment_status_label}
+                    currencyCode={form.currency_code}
+                    totalLabel={document.total_label}
+                    amountPaidLabel={document.amount_paid_label}
+                    balanceDue={document.balance_due}
+                    balanceDueLabel={document.balance_due_label}
+                />
+            ) : null}
+
             {document?.full_number ? (
                 <div className="flex items-center justify-between gap-4 rounded-2xl border border-violet-200/80 bg-linear-to-r from-violet-50/90 to-white px-5 py-4 shadow-sm">
                     <div>

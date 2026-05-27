@@ -49,6 +49,8 @@ class RoleAndPermissionSeeder extends Seeder
                 'sales.quotations.send-email',
                 'document_series.view',
                 'electronic_documents.view',
+                'treasury.collections.view',
+                'treasury.collections.create',
             ],
             'warehouse' => [
                 'dashboard.view',
@@ -90,6 +92,8 @@ class RoleAndPermissionSeeder extends Seeder
                 'sales.quotations.send-email',
                 'document_series.view',
                 'electronic_documents.view',
+                'treasury.collections.view',
+                'treasury.collections.create',
             ],
         ];
 

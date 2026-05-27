@@ -11,9 +11,12 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useCloseMobileSidebar } from '@/hooks/use-close-mobile-sidebar';
 import { dashboard } from '@/routes';
 
 export function AppSidebar() {
+    const closeMobileSidebar = useCloseMobileSidebar();
+
     return (
         <Sidebar
             collapsible="icon"
@@ -28,7 +31,11 @@ export function AppSidebar() {
                             asChild
                             className="h-auto min-h-12 hover:bg-violet-100/80"
                         >
-                            <Link href={dashboard()} prefetch>
+                            <Link
+                                href={dashboard()}
+                                prefetch
+                                onClick={closeMobileSidebar}
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

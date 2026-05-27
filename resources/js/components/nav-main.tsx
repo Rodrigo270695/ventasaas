@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 import { adminMainNavItem, adminNavGroups } from '@/config/admin-navigation';
 import { useCan } from '@/hooks/use-can';
+import { useCloseMobileSidebar } from '@/hooks/use-close-mobile-sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { filterNavGroups } from '@/lib/admin-navigation-access';
 import {
@@ -55,6 +56,7 @@ function NavMainLink({
     dataTour?: string;
 }) {
     const { isCurrentUrl } = useCurrentUrl();
+    const closeMobileSidebar = useCloseMobileSidebar();
     const active = isCurrentUrl(item.href);
 
     return (
@@ -65,7 +67,7 @@ function NavMainLink({
                 tooltip={{ children: item.title }}
                 className="cursor-pointer rounded-xl transition-all duration-200 hover:bg-violet-100/70"
             >
-                <Link href={item.href} prefetch>
+                <Link href={item.href} prefetch onClick={closeMobileSidebar}>
                     {item.icon && (
                         <item.icon className="size-4 text-[#7c3aed]" />
                     )}

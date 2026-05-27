@@ -1,3 +1,4 @@
+import { router } from "@inertiajs/react"
 import { Slot } from "@radix-ui/react-slot"
 import type { VariantProps} from "class-variance-authority";
 import { cva } from "class-variance-authority"
@@ -90,6 +91,13 @@ function SidebarProvider({
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
   }, [isMobile, setOpen, setOpenMobile])
+
+  // Close mobile drawer after Inertia navigation (e.g. sidebar link click).
+  React.useEffect(() => {
+    return router.on("navigate", () => {
+      setOpenMobile(false)
+    })
+  }, [setOpenMobile])
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {

@@ -11,6 +11,7 @@ import { DataTable } from '@/components/data-table';
 import type { DataTableColumn } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { SalesDocumentPaymentStatusBadge } from '@/components/admin/ventas/sales-document-payment-status';
 import type { SalesDocumentListRow } from '@/types/admin/sales-documents';
 
 export type SalesDocumentsTableAbilities = {
@@ -45,30 +46,6 @@ type Props = {
     onFilteredCountChange?: (count: number) => void;
     dateRange?: DateRangeProps;
 };
-
-function PaymentStatusBadge({
-    status,
-    label,
-}: {
-    status: string;
-    label: string;
-}) {
-    return (
-        <span
-            className={cn(
-                'inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                status === 'paid' &&
-                    'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/80',
-                status === 'partial' &&
-                    'bg-sky-50 text-sky-700 ring-1 ring-sky-200/80',
-                status === 'unpaid' &&
-                    'bg-amber-50 text-amber-800 ring-1 ring-amber-200/80',
-            )}
-        >
-            {label}
-        </span>
-    );
-}
 
 function StatusBadge({ status, label }: { status: string; label: string }) {
     return (
@@ -197,7 +174,7 @@ export function SalesDocumentsTable({
                 cell: (row) =>
                     row.payment_status_label ? (
                         <span>
-                            <PaymentStatusBadge
+                            <SalesDocumentPaymentStatusBadge
                                 status={row.payment_status ?? 'unpaid'}
                                 label={row.payment_status_label}
                             />

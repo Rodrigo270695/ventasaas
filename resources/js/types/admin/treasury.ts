@@ -83,6 +83,8 @@ export type CollectionPaymentRow = {
     id: string;
     payment_date: string;
     payment_date_label: string;
+    recorded_at: string | null;
+    recorded_at_label: string | null;
     amount: string;
     amount_label: string;
     currency_code: string;

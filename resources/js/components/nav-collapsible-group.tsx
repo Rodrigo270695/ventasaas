@@ -13,6 +13,7 @@ import {
     SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import { navGroupTourId } from '@/config/admin-tour';
+import { useCloseMobileSidebar } from '@/hooks/use-close-mobile-sidebar';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn } from '@/lib/utils';
 import type { NavGroup } from '@/types';
@@ -30,6 +31,7 @@ function groupHasActiveChild(
 
 export function NavCollapsibleGroup({ group }: { group: NavGroup }) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const closeMobileSidebar = useCloseMobileSidebar();
     const isGroupActive = groupHasActiveChild(group, isCurrentOrParentUrl);
 
     return (
@@ -113,6 +115,7 @@ export function NavCollapsibleGroup({ group }: { group: NavGroup }) {
                                                 <Link
                                                     href={item.href}
                                                     prefetch
+                                                    onClick={closeMobileSidebar}
                                                     className="flex w-full min-w-0 items-center gap-3"
                                                 >
                                                     <span
