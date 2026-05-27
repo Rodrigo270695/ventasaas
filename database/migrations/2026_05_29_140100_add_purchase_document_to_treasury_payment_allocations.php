@@ -20,11 +20,6 @@ return new class extends Migration
                 ->constrained('purchase_documents')
                 ->restrictOnDelete();
 
-            $table->foreign('sales_document_id')
-                ->references('id')
-                ->on('sales_documents')
-                ->restrictOnDelete();
-
             $table->index(['purchase_document_id']);
         });
     }
@@ -41,10 +36,15 @@ return new class extends Migration
 
         Schema::table('treasury_payment_allocations', function (Blueprint $table) {
             $table->uuid('sales_document_id')->nullable(false)->change();
-            $table->foreign('sales_document_id')
-                ->references('id')
-                ->on('sales_documents')
-                ->restrictOnDelete();
         });
+
+        if (Schema::hasTable('sales_documents')) {
+            Schema::table('treasury_payment_allocations', function (Blueprint $table) {
+                $table->foreign('sales_document_id')
+                    ->references('id')
+                    ->on('sales_documents')
+                    ->restrictOnDelete();
+            });
+        }
     }
 };
