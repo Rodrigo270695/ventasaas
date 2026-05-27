@@ -1,0 +1,84 @@
+/* Toasts Choko — colores por tipo */
+[data-sonner-toaster] {
+    --choko-toast-radius: 0.875rem;
+}
+
+[data-sonner-toast] {
+    border-radius: var(--choko-toast-radius) !important;
+    padding: 0.875rem 1rem !important;
+    font-family: var(--font-sans);
+    box-shadow:
+        0 4px 16px -4px rgba(91, 33, 182, 0.15),
+        0 8px 24px -8px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-sonner-toast] [data-title] {
+    font-weight: 600;
+    font-size: 0.875rem;
+    line-height: 1.35;
+}
+
+[data-sonner-toast] [data-description] {
+    font-size: 0.8125rem;
+    opacity: 0.9;
+}
+
+[data-sonner-toast][data-type='success'] {
+    background: linear-gradient(
+        135deg,
+        rgba(236, 253, 245, 0.98) 0%,
+        rgba(209, 250, 229, 0.95) 100%
+    ) !important;
+    border: 1px solid rgba(52, 211, 153, 0.45) !important;
+    color: #065f46 !important;
+}
+
+[data-sonner-toast][data-type='error'] {
+    background: linear-gradient(
+        135deg,
+        rgba(254, 242, 242, 0.98) 0%,
+        rgba(254, 226, 226, 0.95) 100%
+    ) !important;
+    border: 1px solid rgba(248, 113, 113, 0.5) !important;
+    color: #991b1b !important;
+}
+
+[data-sonner-toast][data-type='warning'] {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 251, 235, 0.98) 0%,
+        rgba(254, 243, 199, 0.95) 100%
+    ) !important;
+    border: 1px solid rgba(251, 191, 36, 0.5) !important;
+    color: #92400e !important;
+}
+
+[data-sonner-toast][data-type='info'] {
+    background: linear-gradient(
+        135deg,
+        rgba(239, 246, 255, 0.98) 0%,
+        rgba(219, 234, 254, 0.95) 100%
+    ) !important;
+    border: 1px solid rgba(96, 165, 250, 0.45) !important;
+    color: #1e40af !important;
+}
+
+[data-sonner-toast][data-type='default'] {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.98) 0%,
+        rgba(253, 248, 255, 0.95) 100%
+    ) !important;
+    border: 1px solid rgba(233, 213, 255, 0.8) !important;
+    color: #4c1d95 !important;
+}
+
+[data-sonner-toast] [data-close-button] {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: inherit !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+}

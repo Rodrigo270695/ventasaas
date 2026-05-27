@@ -1,0 +1,24 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('sunat_tax_affectations', function (Blueprint $table) {
+            $table->string('code', 2)->primary();
+            $table->string('name', 120);
+            $table->decimal('default_igv_rate', 8, 4)->default(0);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('sunat_tax_affectations');
+    }
+};
