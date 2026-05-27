@@ -2,16 +2,15 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('treasury_payment_allocations', function (Blueprint $table) {
-            $table->dropUnique(['treasury_payment_id', 'sales_document_id']);
-            $table->dropForeign(['sales_document_id']);
-        });
+        DB::statement('ALTER TABLE treasury_payment_allocations DROP CONSTRAINT IF EXISTS treasury_payment_allocations_treasury_payment_id_sales_document_id_unique');
+        DB::statement('ALTER TABLE treasury_payment_allocations DROP CONSTRAINT IF EXISTS treasury_payment_allocations_sales_document_id_foreign');
 
         Schema::table('treasury_payment_allocations', function (Blueprint $table) {
             $table->uuid('sales_document_id')->nullable()->change();
@@ -38,9 +37,7 @@ return new class extends Migration
             $table->dropColumn('purchase_document_id');
         });
 
-        Schema::table('treasury_payment_allocations', function (Blueprint $table) {
-            $table->dropForeign(['sales_document_id']);
-        });
+        DB::statement('ALTER TABLE treasury_payment_allocations DROP CONSTRAINT IF EXISTS treasury_payment_allocations_sales_document_id_foreign');
 
         Schema::table('treasury_payment_allocations', function (Blueprint $table) {
             $table->uuid('sales_document_id')->nullable(false)->change();
