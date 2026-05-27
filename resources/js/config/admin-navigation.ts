@@ -17,7 +17,6 @@ import {
     Warehouse,
 } from 'lucide-react';
 import { dashboard } from '@/routes';
-import { edit as appearanceEdit } from '@/routes/appearance';
 import { edit as profileEdit } from '@/routes/profile';
 import { edit as securityEdit } from '@/routes/security';
 import type { NavGroup, NavItem } from '@/types';
@@ -141,7 +140,6 @@ export const adminNavGroups: NavGroup[] = [
             { title: 'Tipos de cambio', soon: true },
             { title: 'Mi perfil', href: profileEdit() },
             { title: 'Seguridad', href: securityEdit() },
-            { title: 'Apariencia', href: appearanceEdit() },
         ],
     },
     {
