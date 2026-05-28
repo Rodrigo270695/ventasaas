@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { store as storeAdjustment } from '@/routes/admin/inventario/saldos/ajustes';
 import { StockAdjustPriceSyncSection } from '@/components/admin/inventario/stock-adjust-price-sync-section';
 import {
@@ -11,9 +11,10 @@ import {
 import {
     FormComboboxField,
     FormSection,
+    FormSelectField,
     FormTextField,
 } from '@/components/form';
-import type { FormComboboxOption } from '@/components/form';
+import type { FormComboboxOption, FormSelectOption } from '@/components/form';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDecimalInput } from '@/lib/format-decimal';
@@ -25,6 +26,7 @@ type Props = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     warehouseId: string;
+    warehouseOptions?: FormSelectOption[];
     variantOptions: FormComboboxOption[];
     priceListOptions?: PriceListOption[];
     canSyncSalePrices?: boolean;
@@ -46,6 +48,8 @@ const defaultOldForm: StockAdjustOldForm = {
     markup_value: '',
 };
 
+const STOCK_BALANCE_LOOKUP_URL = '/admin/inventario/saldos/consulta';
+
 function defaultSelectedLists(
     options: PriceListOption[],
     oldIds: string[],
@@ -65,6 +69,7 @@ export function StockAdjustFormModal({
     open,
     onOpenChange,
     warehouseId,
+    warehouseOptions = [],
     variantOptions,
     priceListOptions = [],
     canSyncSalePrices = false,
@@ -74,6 +79,7 @@ export function StockAdjustFormModal({
     oldForm = defaultOldForm,
     errors = {},
 }: Props) {
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState(warehouseId);
     const [variantId, setVariantId] = useState('');
     const [quantity, setQuantity] = useState('');
     const [unitCost, setUnitCost] = useState('');
@@ -85,9 +91,54 @@ export function StockAdjustFormModal({
     const [markupType, setMarkupType] = useState<SalePriceMarkupType>('percent');
     const [markupValue, setMarkupValue] = useState('');
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+    const [loadingBalance, setLoadingBalance] = useState(false);
+
+    const showWarehouseSelector = warehouseOptions.length > 1;
+
+    const loadBalanceForSelection = useCallback(
+        async (nextWarehouseId: string, nextVariantId: string) => {
+            if (!nextWarehouseId || !nextVariantId) {
+                return;
+            }
+
+            setLoadingBalance(true);
+
+            try {
+                const params = new URLSearchParams({
+                    warehouse_id: nextWarehouseId,
+                    product_variant_id: nextVariantId,
+                });
+                const response = await fetch(
+                    `${STOCK_BALANCE_LOOKUP_URL}?${params.toString()}`,
+                    {
+                        credentials: 'same-origin',
+                        headers: { Accept: 'application/json' },
+                    },
+                );
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const body = (await response.json()) as {
+                    quantity_on_hand?: string;
+                    avg_cost?: string;
+                };
+
+                setQuantity(
+                    formatDecimalInput(body.quantity_on_hand ?? '0'),
+                );
+                setUnitCost(formatDecimalInput(body.avg_cost ?? '0'));
+            } finally {
+                setLoadingBalance(false);
+            }
+        },
+        [],
+    );
 
     useEffect(() => {
         if (open) {
+            setSelectedWarehouseId(warehouseId);
             setVariantId(
                 oldForm.product_variant_id ||
                     initialVariantId ||
@@ -123,9 +174,38 @@ export function StockAdjustFormModal({
         initialUnitCost,
         errors,
         priceListOptions,
+        warehouseId,
+    ]);
+
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const presetVariantId =
+            oldForm.product_variant_id || initialVariantId || '';
+        const presetWarehouseId = warehouseId;
+
+        if (
+            presetVariantId &&
+            presetWarehouseId &&
+            !oldForm.quantity_on_hand &&
+            !initialQuantity
+        ) {
+            void loadBalanceForSelection(presetWarehouseId, presetVariantId);
+        }
+    }, [
+        open,
+        warehouseId,
+        initialVariantId,
+        initialQuantity,
+        oldForm.product_variant_id,
+        oldForm.quantity_on_hand,
+        loadBalanceForSelection,
     ]);
 
     const resetForm = () => {
+        setSelectedWarehouseId(warehouseId);
         setVariantId('');
         setQuantity('');
         setUnitCost('');
@@ -159,9 +239,30 @@ export function StockAdjustFormModal({
     const message = (key: string, formErrors: Record<string, string>) =>
         fieldErrors[key] ?? formErrors[key] ?? errors[key];
 
-    const canSubmit = variantId.length > 0 && quantity.trim().length > 0;
+    const canSubmit =
+        selectedWarehouseId.length > 0 &&
+        variantId.length > 0 &&
+        quantity.trim().length > 0;
 
     const showPriceSync = canSyncSalePrices && priceListOptions.length > 0;
+
+    const handleWarehouseChange = (value: string) => {
+        setSelectedWarehouseId(value);
+        clearError('warehouse_id');
+
+        if (variantId) {
+            void loadBalanceForSelection(value, variantId);
+        }
+    };
+
+    const handleVariantChange = (value: string) => {
+        setVariantId(value);
+        clearError('product_variant_id');
+
+        if (selectedWarehouseId) {
+            void loadBalanceForSelection(selectedWarehouseId, value);
+        }
+    };
 
     const togglePriceList = (listId: string, checked: boolean) => {
         setSelectedPriceListIds((current) => {
@@ -195,12 +296,12 @@ export function StockAdjustFormModal({
                         <input
                             type="hidden"
                             name="warehouse_id"
-                            value={warehouseId}
+                            value={selectedWarehouseId}
                         />
 
                         <AppModalHeader
                             title="Ajuste de stock"
-                            description="Define la cantidad final en almacén. Si aumentas stock, indica el costo unitario del ingreso."
+                            description="Elige el almacén o tienda, define la cantidad final y el costo si ingresas stock."
                         />
 
                         <AppModalBody className="space-y-4">
@@ -208,6 +309,21 @@ export function StockAdjustFormModal({
                                 title="Movimiento"
                                 gridClassName="grid gap-3"
                             >
+                                {showWarehouseSelector ? (
+                                    <FormSelectField
+                                        id="stock-adjust-warehouse"
+                                        name="warehouse_id_display"
+                                        label="Almacén / tienda"
+                                        required
+                                        value={selectedWarehouseId}
+                                        onValueChange={handleWarehouseChange}
+                                        options={warehouseOptions}
+                                        placeholder="Seleccionar almacén…"
+                                        disabled={processing || loadingBalance}
+                                        fieldClassName="sm:col-span-2"
+                                        error={message('warehouse_id', formErrors)}
+                                    />
+                                ) : null}
                                 <FormComboboxField
                                     key={open ? 'adjust-open' : 'adjust-closed'}
                                     id="stock-adjust-variant"
@@ -215,14 +331,11 @@ export function StockAdjustFormModal({
                                     label="Variante"
                                     required
                                     value={variantId}
-                                    onValueChange={(v) => {
-                                        setVariantId(v);
-                                        clearError('product_variant_id');
-                                    }}
+                                    onValueChange={handleVariantChange}
                                     options={variantOptions}
                                     placeholder="Buscar producto o SKU…"
                                     emptyMessage="Ninguna variante coincide."
-                                    disabled={processing}
+                                    disabled={processing || loadingBalance}
                                     fieldClassName="sm:col-span-2"
                                     error={message(
                                         'product_variant_id',
@@ -247,7 +360,7 @@ export function StockAdjustFormModal({
                                         'quantity_on_hand',
                                         formErrors,
                                     )}
-                                    disabled={processing}
+                                    disabled={processing || loadingBalance}
                                 />
                                 <FormTextField
                                     id="stock-adjust-cost"
@@ -263,7 +376,7 @@ export function StockAdjustFormModal({
                                     placeholder="0.00"
                                     hint="Obligatorio si subes la cantidad. Sirve de base para recalcular precios."
                                     error={message('unit_cost', formErrors)}
-                                    disabled={processing}
+                                    disabled={processing || loadingBalance}
                                 />
                                 <FormTextField
                                     id="stock-adjust-notes"
@@ -329,7 +442,7 @@ export function StockAdjustFormModal({
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={processing || !canSubmit}
+                                disabled={processing || loadingBalance || !canSubmit}
                                 className="cursor-pointer rounded-xl bg-linear-to-r from-[#ec4899] to-[#7c3aed] font-bold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {processing && <Spinner />}

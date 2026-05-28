@@ -160,6 +160,7 @@ export default function ProductsShow({
 
                 {tab === 'stock' && (
                     <ProductStockPanel
+                        productId={product.id}
                         trackStock={product.track_stock}
                         variants={product.variants}
                         warehouseOptions={warehouseOptions}

@@ -167,7 +167,7 @@ export function DataTable<T>({
         (col) => col.sortable && col.sortValue,
     );
 
-    if (data.length === 0) {
+    if (data.length === 0 && !toolbarEnd && !serverSearch) {
         return (
             <p className="rounded-xl border border-dashed border-violet-200 bg-white/60 px-4 py-8 text-center text-sm text-[#9d8fb0]">
                 {emptyMessage}
@@ -175,30 +175,41 @@ export function DataTable<T>({
         );
     }
 
+    const toolbar = (
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
+            <DataTableSearch
+                value={serverSearch ? serverSearch.value : query}
+                onChange={serverSearch ? serverSearch.onChange : setQuery}
+                onCommit={serverSearch?.onCommit}
+                placeholder={serverSearch?.placeholder ?? searchPlaceholder}
+                resultCount={
+                    serverSearch || hasActiveFilter
+                        ? sortedItems.length
+                        : undefined
+                }
+                isSearching={isPending}
+                className="w-full max-w-none xl:min-w-0 xl:flex-1"
+            />
+            {toolbarEnd ? (
+                <div className="w-full shrink-0 xl:w-auto">{toolbarEnd}</div>
+            ) : null}
+        </div>
+    );
+
+    if (data.length === 0) {
+        return (
+            <div data-tour="page-table" className={cn('space-y-2', className)}>
+                {toolbar}
+                <p className="rounded-xl border border-dashed border-violet-200 bg-white/60 px-4 py-8 text-center text-sm text-[#9d8fb0]">
+                    {emptyMessage}
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div data-tour="page-table" className={cn('space-y-2', className)}>
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
-                <DataTableSearch
-                    value={serverSearch ? serverSearch.value : query}
-                    onChange={serverSearch ? serverSearch.onChange : setQuery}
-                    onCommit={serverSearch?.onCommit}
-                    placeholder={
-                        serverSearch?.placeholder ?? searchPlaceholder
-                    }
-                    resultCount={
-                        serverSearch || hasActiveFilter
-                            ? sortedItems.length
-                            : undefined
-                    }
-                    isSearching={isPending}
-                    className="w-full max-w-none xl:min-w-0 xl:flex-1"
-                />
-                {toolbarEnd ? (
-                    <div className="w-full shrink-0 xl:w-auto">
-                        {toolbarEnd}
-                    </div>
-                ) : null}
-            </div>
+            {toolbar}
 
             {sortedItems.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-violet-200 bg-white/60 px-4 py-8 text-center text-sm text-[#9d8fb0]">

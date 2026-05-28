@@ -9,6 +9,7 @@ use App\Models\StockBalance;
 use App\Models\VariantPackagingConversion;
 use App\Models\Warehouse;
 use App\Services\Catalog\ProductPriceFromCostService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -202,6 +203,26 @@ class StockBalanceController extends Controller
                 'markup_type' => old('markup_type', 'percent'),
                 'markup_value' => old('markup_value', ''),
             ],
+        ]);
+    }
+
+    public function lookup(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('stock_balances.view'), 403);
+
+        $validated = $request->validate([
+            'warehouse_id' => ['required', 'uuid', 'exists:warehouses,id'],
+            'product_variant_id' => ['required', 'uuid', 'exists:product_variants,id'],
+        ]);
+
+        $balance = StockBalance::query()
+            ->where('warehouse_id', $validated['warehouse_id'])
+            ->where('product_variant_id', $validated['product_variant_id'])
+            ->first(['quantity_on_hand', 'avg_cost']);
+
+        return response()->json([
+            'quantity_on_hand' => (string) ($balance?->quantity_on_hand ?? '0'),
+            'avg_cost' => (string) ($balance?->avg_cost ?? '0'),
         ]);
     }
 }

@@ -203,6 +203,8 @@ Route::middleware(['auth', 'verified'])
 
         Route::prefix('inventario')->name('inventario.')->group(function () {
             Route::get('saldos', [StockBalanceController::class, 'index'])->name('saldos.index');
+            Route::get('saldos/consulta', [StockBalanceController::class, 'lookup'])
+                ->name('saldos.consulta');
             Route::post('saldos/ajustes', [StockAdjustmentController::class, 'store'])
                 ->name('saldos.ajustes.store');
             Route::post('saldos/traslados', [StockTransferController::class, 'store'])

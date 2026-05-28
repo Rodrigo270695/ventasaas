@@ -281,6 +281,7 @@ export default function StockBalancesIndex({
                         open={adjustOpen}
                         onOpenChange={handleAdjustOpenChange}
                         warehouseId={warehouseId}
+                        warehouseOptions={warehouseOptions}
                         variantOptions={variantOptions}
                         priceListOptions={priceListOptions}
                         canSyncSalePrices={canSyncSalePrices}
