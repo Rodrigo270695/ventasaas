@@ -84,7 +84,7 @@ export function ProductStockPanel({
                     Para <strong className="font-semibold text-[#5b21b6]">cargar o ajustar</strong>{' '}
                     cantidades usa{' '}
                     <strong className="font-semibold text-[#5b21b6]">
-                        Inventario → Saldos por almacén
+                        Inventario → Stock Por almacen
                     </strong>
                     . Todo queda registrado en el kardex.
                 </p>

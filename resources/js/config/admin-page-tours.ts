@@ -265,7 +265,7 @@ export const adminPageTours: PageTourDefinition[] = [
     createCrudIndexTour({
         id: 'inventario.saldos',
         path: '/admin/inventario/saldos',
-        title: 'Saldos por almacén',
+        title: 'Stock Por almacen',
         description: 'Consulta existencias actuales y alertas de stock mínimo.',
         entityName: 'saldo',
         entityNamePlural: 'Saldos',

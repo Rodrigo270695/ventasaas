@@ -199,7 +199,7 @@ export function ProductGeneralForm({
                                 }
                                 hint={
                                     trackStock
-                                        ? 'Las cantidades se cargan y corrigen en Inventario → Saldos por almacén.'
+                                        ? 'Las cantidades se cargan y corrigen en Inventario → Stock Por almacen.'
                                         : 'Los servicios no llevan inventario.'
                                 }
                             />

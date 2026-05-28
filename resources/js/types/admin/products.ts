@@ -60,6 +60,28 @@ export type PriceListOption = FormSelectOption & {
     is_default: boolean;
 };
 
+export type ProductStockSummaryRow = {
+    variant_id: string;
+    sku: string;
+    label: string | null;
+    is_default: boolean;
+    minimum_stock: string;
+    quantity_on_hand: string;
+    avg_cost: string;
+    stock_value: string;
+    is_low_stock: boolean;
+    is_out_of_stock: boolean;
+};
+
+export type ProductStockSummaryResponse = {
+    product_id: string;
+    product_name: string;
+    track_stock: boolean;
+    warehouse_id: string | null;
+    warehouse_label: string | null;
+    variants: ProductStockSummaryRow[];
+};
+
 export type ProductRow = {
     id: string;
     name: string;
@@ -134,6 +156,8 @@ export type ProductsIndexPageProps = {
     categoryOptions: FormSelectOption[];
     brandOptions: FormSelectOption[];
     unitOptions: FormSelectOption[];
+    warehouseOptions?: WarehouseOption[];
+    defaultWarehouseId?: string | null;
     productModal?: 'create' | null;
     oldForm?: ProductsOldForm;
 };

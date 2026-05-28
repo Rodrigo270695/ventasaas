@@ -4,8 +4,10 @@ use App\Models\Brand;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\StockBalance;
 use App\Models\Unit;
 use App\Models\User;
+use App\Models\Warehouse;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -78,6 +80,31 @@ test('product can be created with initial variant', function () {
             ->exists(),
     )->toBeTrue();
     expect($product->variants()->where('is_default', true)->exists())->toBeTrue();
+});
+
+test('admin can fetch product stock summary', function () {
+    $warehouse = Warehouse::factory()->defaultWarehouse()->create();
+    $product = Product::factory()->create(['track_stock' => true, 'type' => 'good']);
+    $variant = $product->variants()->first();
+
+    StockBalance::query()->create([
+        'warehouse_id' => $warehouse->id,
+        'product_variant_id' => $variant->id,
+        'quantity_on_hand' => '12.5000',
+        'quantity_reserved' => '0',
+        'avg_cost' => '8.2500',
+    ]);
+
+    $this->actingAs(productsAdmin())
+        ->getJson(route('admin.catalogo.productos.stock-resumen', [
+            'producto' => $product,
+            'warehouse_id' => $warehouse->id,
+        ]))
+        ->assertOk()
+        ->assertJsonPath('product_id', $product->id)
+        ->assertJsonPath('variants.0.sku', $variant->sku)
+        ->assertJsonPath('variants.0.quantity_on_hand', '12.5000')
+        ->assertJsonPath('variants.0.avg_cost', '8.2500');
 });
 
 test('product can be updated', function () {

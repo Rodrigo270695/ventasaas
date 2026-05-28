@@ -54,6 +54,8 @@ Route::middleware(['auth', 'verified'])
             Route::resource('marcas', BrandController::class)->except(['show', 'create', 'edit']);
             Route::resource('categorias', ProductCategoryController::class)->except(['show', 'create', 'edit']);
             Route::resource('productos', ProductController::class)->except(['create', 'edit']);
+            Route::get('productos/{producto}/stock-resumen', [ProductController::class, 'stockSummary'])
+                ->name('productos.stock-resumen');
             Route::post('productos/{producto}/variantes', [ProductVariantController::class, 'store'])
                 ->name('productos.variantes.store');
             Route::put('productos/{producto}/variantes/{variante}', [ProductVariantController::class, 'update'])

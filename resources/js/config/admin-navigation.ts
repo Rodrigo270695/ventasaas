@@ -58,7 +58,7 @@ export const adminNavGroups: NavGroup[] = [
         icon: Warehouse,
         items: [
             { title: 'Almacenes', href: '/admin/inventario/almacenes' },
-            { title: 'Saldos por almacén', href: '/admin/inventario/saldos' },
+            { title: 'Stock Por almacen', href: '/admin/inventario/saldos' },
             { title: 'Movimientos (kardex)', href: '/admin/inventario/movimientos' },
             { title: 'Reservas de stock', soon: true },
         ],

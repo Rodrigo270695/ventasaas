@@ -3,6 +3,7 @@ import { CloudOff, ListFilter } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ProductDeleteModal } from '@/components/admin/catalogo/product-delete-modal';
 import { ProductFormModal } from '@/components/admin/catalogo/product-form-modal';
+import { ProductStockModal } from '@/components/admin/catalogo/product-stock-modal';
 import { ProductsTable } from '@/components/admin/catalogo/products-table';
 import {
     PageHeader,
@@ -18,7 +19,7 @@ import { useCan } from '@/hooks/use-can';
 import { useOfflineProducts } from '@/hooks/use-offline-products';
 import { useProductsModals } from '@/hooks/use-products-modals';
 import { catalogoProductosIndex } from '@/lib/admin-breadcrumbs';
-import { PRODUCTS_PERMISSIONS } from '@/lib/admin-permissions';
+import { PRODUCTS_PERMISSIONS, STOCK_BALANCES_PERMISSIONS } from '@/lib/admin-permissions';
 import { isOfflineEntityId } from '@/lib/offline-store';
 import { notify } from '@/lib/notify';
 import { PRODUCT_STAT_ICONS } from '@/lib/product-stat-icons';
@@ -42,6 +43,8 @@ export default function ProductsIndex({
     unitOptions: serverUnitOptions,
     productModal = null,
     oldForm,
+    warehouseOptions = [],
+    defaultWarehouseId = null,
 }: ProductsIndexPageProps) {
     const { errors = {} } = usePage<PageProps>().props;
     const { can } = useCan();
@@ -65,6 +68,8 @@ export default function ProductsIndex({
     });
 
     const [filteredCount, setFilteredCount] = useState(products.length);
+    const [stockProduct, setStockProduct] = useState<ProductRow | null>(null);
+    const [stockOpen, setStockOpen] = useState(false);
 
     useEffect(() => {
         setFilteredCount(products.length);
@@ -76,6 +81,9 @@ export default function ProductsIndex({
         () => ({
             canUpdate: can(PRODUCTS_PERMISSIONS.UPDATE) && !isOffline,
             canDelete: can(PRODUCTS_PERMISSIONS.DELETE),
+            canViewStock:
+                can(STOCK_BALANCES_PERMISSIONS.VIEW) &&
+                !isOffline,
         }),
         [can, isOffline],
     );
@@ -86,6 +94,19 @@ export default function ProductsIndex({
 
     const resolveStatIcon = useCallback((stat: ProductStatItem) => {
         return stat.icon ?? PRODUCT_STAT_ICONS[stat.key];
+    }, []);
+
+    const openProductStock = useCallback((product: ProductRow) => {
+        setStockProduct(product);
+        setStockOpen(true);
+    }, []);
+
+    const handleStockOpenChange = useCallback((open: boolean) => {
+        setStockOpen(open);
+
+        if (!open) {
+            setStockProduct(null);
+        }
     }, []);
 
     const openProduct = useCallback(
@@ -193,6 +214,7 @@ export default function ProductsIndex({
                 abilities={tableAbilities}
                 onOpen={openProduct}
                 onDelete={modals.openDelete}
+                onViewStock={openProductStock}
                 onFilteredCountChange={handleFilteredCountChange}
             />
 
@@ -217,6 +239,16 @@ export default function ProductsIndex({
                     product={modals.deletingProduct}
                     isOffline={isOffline}
                     onOfflineDelete={handleOfflineDelete}
+                />
+            )}
+
+            {tableAbilities.canViewStock && (
+                <ProductStockModal
+                    open={stockOpen}
+                    onOpenChange={handleStockOpenChange}
+                    product={stockProduct}
+                    warehouseOptions={warehouseOptions}
+                    defaultWarehouseId={defaultWarehouseId}
                 />
             )}
         </div>

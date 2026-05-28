@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { ExternalLink, Package, Pencil, Trash2 } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { DataTable } from '@/components/data-table';
 import type { DataTableColumn } from '@/components/data-table';
@@ -12,6 +12,7 @@ import type { ProductRow } from '@/types/admin/products';
 export type ProductTableAbilities = {
     canUpdate: boolean;
     canDelete: boolean;
+    canViewStock: boolean;
 };
 
 type Props = {
@@ -19,6 +20,7 @@ type Props = {
     abilities: ProductTableAbilities;
     onOpen: (product: ProductRow) => void;
     onDelete: (product: ProductRow) => void;
+    onViewStock?: (product: ProductRow) => void;
     onFilteredCountChange?: (count: number) => void;
 };
 
@@ -57,6 +59,7 @@ export function ProductsTable({
     abilities,
     onOpen,
     onDelete,
+    onViewStock,
     onFilteredCountChange,
 }: Props) {
     const hasActions = true;
@@ -199,6 +202,21 @@ export function ProductsTable({
     const renderActions = useCallback(
         (product: ProductRow) => (
             <>
+                {abilities.canViewStock &&
+                product.track_stock &&
+                product.type === 'good' &&
+                onViewStock ? (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-8 cursor-pointer rounded-lg text-cyan-700 transition-all duration-200 hover:bg-cyan-600 hover:text-white hover:shadow-md hover:shadow-cyan-300/40 active:scale-95"
+                        onClick={() => onViewStock(product)}
+                        aria-label={`Ver stock de ${product.name}`}
+                    >
+                        <Package className="size-4" />
+                    </Button>
+                ) : null}
                 <Button
                     type="button"
                     variant="ghost"
@@ -227,7 +245,7 @@ export function ProductsTable({
                 )}
             </>
         ),
-        [abilities, onOpen, onDelete],
+        [abilities, onOpen, onDelete, onViewStock],
     );
 
     return (

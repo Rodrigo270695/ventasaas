@@ -125,7 +125,7 @@ export function NavMain({
                     allowed: can(PURCHASES_PERMISSIONS.VIEW),
                 },
                 {
-                    title: 'Saldos de stock',
+                    title: 'Stock Por almacen',
                     href: '/admin/inventario/saldos',
                     icon: Warehouse,
                     allowed: can(STOCK_BALANCES_PERMISSIONS.VIEW),

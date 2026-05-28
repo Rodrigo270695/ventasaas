@@ -152,10 +152,10 @@ return [
         [
             'key' => 'stock_balances',
             'section' => 'Inventario',
-            'label' => 'Saldos por almacén',
+            'label' => 'Stock Por almacen',
             'implemented' => true,
             'permissions' => [
-                ['name' => 'stock_balances.view', 'label' => 'Ver saldos por almacén'],
+                ['name' => 'stock_balances.view', 'label' => 'Ver stock por almacén'],
                 ['name' => 'stock_balances.adjust', 'label' => 'Ajustar stock y costo promedio'],
             ],
         ],

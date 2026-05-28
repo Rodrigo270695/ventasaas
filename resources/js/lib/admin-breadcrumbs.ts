@@ -106,7 +106,7 @@ export const inventarioAlmacenesIndex = (): BreadcrumbItem[] => [
 
 export const inventarioSaldosIndex = (): BreadcrumbItem[] => [
     adminDashboard,
-    { title: 'Saldos por almacén', href: '/admin/inventario/saldos' },
+    { title: 'Stock Por almacen', href: '/admin/inventario/saldos' },
 ];
 
 export const inventarioMovimientosIndex = (): BreadcrumbItem[] => [

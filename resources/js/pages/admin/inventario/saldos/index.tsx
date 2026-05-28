@@ -196,12 +196,12 @@ export default function StockBalancesIndex({
 
     return (
         <div className="flex flex-1 flex-col gap-2 p-4 pb-6 md:gap-3 md:p-6 md:pb-6">
-            <Head title="Saldos por almacén" />
+            <Head title="Stock Por almacen" />
 
             <PageHeader className="mb-0 space-y-3 border-b pb-3">
                 <PageHeaderTop>
                     <PageHeaderTitle
-                        title="Saldos por almacén"
+                        title="Stock Por almacen"
                         description="Único lugar para cargar o corregir stock. Cada ajuste queda en el kardex."
                     />
                     <PageHeaderActions>

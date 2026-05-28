@@ -17,6 +17,7 @@ use App\Models\VariantPackagingConversion;
 use App\Models\Unit;
 use App\Models\Warehouse;
 use App\Support\Toast;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +71,8 @@ class ProductController extends Controller
 
         return Inertia::render('admin/catalogo/productos/index', [
             'products' => $productsPayload,
+            'warehouseOptions' => $this->warehouseOptions(),
+            'defaultWarehouseId' => $defaultWarehouse?->id,
             'stats' => [
                 ['key' => 'total', 'label' => 'Total', 'value' => $products->count(), 'tone' => 'violet'],
                 ['key' => 'active', 'label' => 'Activos', 'value' => $activeCount, 'tone' => 'green'],
@@ -181,6 +184,89 @@ class ProductController extends Controller
         return to_route('admin.catalogo.productos.show', [
             'producto' => $producto,
             'tab' => 'general',
+        ]);
+    }
+
+    public function stockSummary(Request $request, Product $producto): JsonResponse
+    {
+        abort_unless(
+            $request->user()?->can('stock_balances.view')
+            || $request->user()?->can('products.view'),
+            403,
+        );
+
+        $warehouseId = $request->string('warehouse_id')->toString() ?: null;
+        $defaultWarehouse = $this->defaultWarehouse();
+
+        if (! $warehouseId && $defaultWarehouse) {
+            $warehouseId = $defaultWarehouse->id;
+        }
+
+        $warehouse = $warehouseId
+            ? Warehouse::query()
+                ->where('is_active', true)
+                ->find($warehouseId, ['id', 'code', 'name'])
+            : null;
+
+        if (! $producto->track_stock || $producto->type !== Product::TYPE_GOOD) {
+            return response()->json([
+                'product_id' => $producto->id,
+                'product_name' => $producto->name,
+                'track_stock' => $producto->track_stock,
+                'warehouse_id' => $warehouse?->id,
+                'warehouse_label' => $warehouse
+                    ? trim($warehouse->name.' ('.$warehouse->code.')')
+                    : null,
+                'variants' => [],
+            ]);
+        }
+
+        $variants = $producto->variants()
+            ->where('is_active', true)
+            ->with([
+                'stockBalances' => fn ($query) => $query->when(
+                    $warehouseId,
+                    fn ($balanceQuery) => $balanceQuery->where('warehouse_id', $warehouseId),
+                ),
+            ])
+            ->orderByDesc('is_default')
+            ->orderBy('sku')
+            ->get(['id', 'sku', 'label', 'minimum_stock', 'is_default']);
+
+        $rows = $variants->map(function (ProductVariant $variant) {
+            $balance = $variant->stockBalances->first();
+            $qty = (string) ($balance?->quantity_on_hand ?? '0');
+            $avg = (string) ($balance?->avg_cost ?? '0');
+            $value = bcmul($qty, $avg, 2);
+            $minimumStock = number_format((float) $variant->minimum_stock, 2, '.', '');
+            $isOutOfStock = bccomp($qty, '0', 4) <= 0;
+            $isLowStock = ! $isOutOfStock
+                && bccomp($minimumStock, '0', 4) === 1
+                && bccomp($qty, $minimumStock, 4) <= 0;
+
+            return [
+                'variant_id' => $variant->id,
+                'sku' => $variant->sku,
+                'label' => $variant->label,
+                'is_default' => $variant->is_default,
+                'minimum_stock' => $minimumStock,
+                'quantity_on_hand' => $qty,
+                'avg_cost' => $avg,
+                'stock_value' => $value,
+                'is_low_stock' => $isLowStock,
+                'is_out_of_stock' => $isOutOfStock,
+            ];
+        });
+
+        return response()->json([
+            'product_id' => $producto->id,
+            'product_name' => $producto->name,
+            'track_stock' => $producto->track_stock,
+            'warehouse_id' => $warehouse?->id,
+            'warehouse_label' => $warehouse
+                ? trim($warehouse->name.' ('.$warehouse->code.')')
+                : null,
+            'variants' => $rows->values()->all(),
         ]);
     }
 
