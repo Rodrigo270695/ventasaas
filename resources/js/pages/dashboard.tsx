@@ -1,5 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { AlertTriangle, Candy, Package, ShoppingCart, TrendingUp, Users } from 'lucide-react';
+import {
+    AlertTriangle,
+    Banknote,
+    Candy,
+    Package,
+    ShoppingCart,
+    TrendingUp,
+    Users,
+    Wallet,
+} from 'lucide-react';
 import {
     Bar,
     BarChart,
@@ -40,8 +49,15 @@ type DashboardProps = {
         documents_period: number;
         quotes_period: number;
         conversion_rate: number;
+        collections_today: number;
+        collections_period: number;
+        collections_prev_period: number;
+        collections_variation: number;
+        collections_count_period: number;
+        receivable_balance: number;
     };
     salesTrend: Array<{ date: string; label: string; amount: number }>;
+    collectionsTrend: Array<{ date: string; label: string; amount: number }>;
     categoryShare: Array<{ category: string; amount: number }>;
     topProducts: Array<{ name: string; qty: number }>;
     lowStockAlerts: Array<{
@@ -88,6 +104,7 @@ function money(value: number): string {
 export default function Dashboard({
     kpis,
     salesTrend,
+    collectionsTrend,
     categoryShare,
     topProducts,
     lowStockAlerts,
@@ -98,6 +115,8 @@ export default function Dashboard({
 }: DashboardProps) {
     const quickLinks = [
         { label: 'Ventas / Comprobantes', href: '/admin/ventas/comprobantes' },
+        { label: 'Ventas / Venta rápida', href: '/admin/ventas/tickets-internos' },
+        { label: 'Tesorería / Cobros', href: '/admin/tesoreria/cobros' },
         { label: 'Ventas / Cotizaciones', href: '/admin/ventas/cotizaciones' },
         { label: 'Compras / Facturas', href: '/admin/compras/facturas' },
         { label: 'Inventario / Saldos', href: '/admin/inventario/saldos' },
@@ -109,7 +128,7 @@ export default function Dashboard({
         {
             title: 'Ventas hoy',
             value: money(kpis.sales_today),
-            hint: 'Comprobantes confirmados',
+            hint: 'Comprobantes + venta rápida',
             icon: TrendingUp,
             accent: 'from-[#ff0f6f]/15 to-white',
         },
@@ -136,6 +155,7 @@ export default function Dashboard({
         },
     ] as const;
     const salesVariationPositive = kpis.sales_variation >= 0;
+    const collectionsVariationPositive = kpis.collections_variation >= 0;
 
     const handleFilterChange = (next: { period?: number; warehouse_id?: string | null }) => {
         router.get(
@@ -158,7 +178,7 @@ export default function Dashboard({
                             Dashboard Choko House
                         </h1>
                         <p className="mt-1 text-sm text-[#7c6f8a]">
-                            Ventas, inventario y alertas clave en tiempo real.
+                            Ventas, cobros, inventario y alertas clave en tiempo real.
                         </p>
                     </div>
                     <img
@@ -240,6 +260,56 @@ export default function Dashboard({
                     ))}
                 </div>
 
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="rounded-2xl border border-emerald-100 bg-linear-to-br from-emerald-50/80 to-white p-4 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold tracking-wide text-emerald-800 uppercase">
+                                Cobrado hoy
+                            </p>
+                            <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                                <Banknote className="size-4" />
+                            </span>
+                        </div>
+                        <p className="mt-2 text-2xl font-extrabold text-[#3b2d4a]">
+                            {money(kpis.collections_today)}
+                        </p>
+                        <p className="mt-1 text-sm text-[#7c6f8a]">
+                            Pagos registrados en tesorería
+                        </p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+                        <p className="text-xs font-semibold tracking-wide text-[#7c6f8a] uppercase">
+                            Cobrado en el periodo
+                        </p>
+                        <p className="mt-2 text-2xl font-extrabold text-[#3b2d4a]">
+                            {money(kpis.collections_period)}
+                        </p>
+                        <p
+                            className={`mt-1 text-sm font-semibold ${collectionsVariationPositive ? 'text-emerald-700' : 'text-rose-700'}`}
+                        >
+                            {collectionsVariationPositive ? '+' : ''}
+                            {kpis.collections_variation.toFixed(2)}% vs periodo anterior ·{' '}
+                            {kpis.collections_count_period.toLocaleString('es-PE')} cobros
+                        </p>
+                    </div>
+                    <div className="rounded-2xl border border-amber-100 bg-linear-to-br from-amber-50/70 to-white p-4 shadow-sm sm:col-span-2 xl:col-span-1">
+                        <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold tracking-wide text-amber-900 uppercase">
+                                Por cobrar
+                            </p>
+                            <span className="flex size-8 items-center justify-center rounded-lg bg-amber-100 text-amber-800">
+                                <Wallet className="size-4" />
+                            </span>
+                        </div>
+                        <p className="mt-2 text-2xl font-extrabold text-[#3b2d4a]">
+                            {money(kpis.receivable_balance)}
+                        </p>
+                        <p className="mt-1 text-sm text-[#7c6f8a]">
+                            Saldo pendiente en ventas confirmadas
+                        </p>
+                    </div>
+                </div>
+
                 <div className="grid gap-4 xl:grid-cols-3">
                     <div className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
                         <p className="text-xs font-semibold tracking-wide text-[#7c6f8a] uppercase">Ventas del periodo</p>
@@ -253,7 +323,7 @@ export default function Dashboard({
                         <p className="text-xs font-semibold tracking-wide text-[#7c6f8a] uppercase">Ticket promedio</p>
                         <p className="mt-2 text-2xl font-extrabold text-[#3b2d4a]">{money(kpis.avg_ticket)}</p>
                         <p className="mt-1 text-sm text-[#7c6f8a]">
-                            {kpis.documents_period.toLocaleString('es-PE')} comprobantes en {filters.period} días
+                            {kpis.documents_period.toLocaleString('es-PE')} ventas confirmadas en {filters.period} días
                         </p>
                     </div>
                     <div className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
@@ -265,8 +335,8 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                <div className="grid gap-4 xl:grid-cols-3" data-tour="dashboard-charts">
-                    <div className="min-w-0 xl:col-span-2">
+                <div className="grid gap-4 xl:grid-cols-2" data-tour="dashboard-charts">
+                    <div className="min-w-0">
                         <div className="h-full rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
                             <div className="mb-3 flex items-center justify-between">
                                 <h2 className="text-sm font-bold text-[#5b2d82]">Tendencia de ventas (7 días)</h2>
@@ -292,6 +362,35 @@ export default function Dashboard({
                             </ChartContainer>
                         </div>
                     </div>
+                    <div className="min-w-0">
+                        <div className="h-full rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
+                            <h2 className="mb-3 text-sm font-bold text-[#047857]">
+                                Tendencia de cobros (7 días)
+                            </h2>
+                            <ChartContainer height={260}>
+                                <LineChart data={collectionsTrend}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#d1fae5" />
+                                    <XAxis dataKey="label" stroke="#7c6f8a" />
+                                    <YAxis stroke="#7c6f8a" />
+                                    <Tooltip
+                                        formatter={(value: number) => money(Number(value))}
+                                        labelFormatter={(label) => `Día: ${label}`}
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="amount"
+                                        stroke="#059669"
+                                        strokeWidth={3}
+                                        dot={{ r: 4, fill: brand.lime }}
+                                        activeDot={{ r: 6 }}
+                                    />
+                                </LineChart>
+                            </ChartContainer>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-3">
                     <div className="min-w-0">
                         <div className="h-full rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
                             <h2 className="mb-3 text-sm font-bold text-[#5b2d82]">Participación por categoría ({filters.period} días)</h2>

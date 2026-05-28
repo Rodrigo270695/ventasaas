@@ -8,6 +8,7 @@ use App\Models\SalesDocument;
 use App\Models\SalesDocumentLine;
 use App\Models\SalesQuotation;
 use App\Models\StockBalance;
+use App\Models\TreasuryPayment;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -35,8 +36,17 @@ class DashboardController extends Controller
 
         $salesDocsBase = SalesDocument::query()
             ->where('status', SalesDocument::STATUS_CONFIRMED)
-            ->where('is_internal', false)
             ->when($warehouseId, fn ($query, $value) => $query->where('warehouse_id', $value));
+
+        $collectionsBase = TreasuryPayment::query()
+            ->where('direction', TreasuryPayment::DIRECTION_COLLECTION)
+            ->when(
+                $warehouseId,
+                fn ($query, $value) => $query->whereHas(
+                    'allocations.salesDocument',
+                    fn ($doc) => $doc->where('warehouse_id', $value),
+                ),
+            );
 
         $salesToday = (float) (clone $salesDocsBase)
             ->whereDate('issue_date', $today)
@@ -62,6 +72,45 @@ class DashboardController extends Controller
         $salesVariation = $salesPrevPeriod > 0
             ? round((($salesCurrentPeriod - $salesPrevPeriod) / $salesPrevPeriod) * 100, 2)
             : ($salesCurrentPeriod > 0 ? 100.0 : 0.0);
+
+        $collectionsToday = (float) (clone $collectionsBase)
+            ->whereDate('created_at', $today)
+            ->sum('amount');
+
+        $collectionsCurrentPeriod = (float) (clone $collectionsBase)
+            ->whereDate('created_at', '>=', $startPeriod)
+            ->whereDate('created_at', '<=', $today)
+            ->sum('amount');
+
+        $collectionsPrevPeriod = (float) (clone $collectionsBase)
+            ->whereDate('created_at', '>=', $startPrevPeriod)
+            ->whereDate('created_at', '<=', $endPrevPeriod)
+            ->sum('amount');
+
+        $collectionsVariation = $collectionsPrevPeriod > 0
+            ? round((($collectionsCurrentPeriod - $collectionsPrevPeriod) / $collectionsPrevPeriod) * 100, 2)
+            : ($collectionsCurrentPeriod > 0 ? 100.0 : 0.0);
+
+        $collectionsCountPeriod = (int) (clone $collectionsBase)
+            ->whereDate('created_at', '>=', $startPeriod)
+            ->whereDate('created_at', '<=', $today)
+            ->count();
+
+        $receivableBalance = (float) SalesDocument::query()
+            ->where('status', SalesDocument::STATUS_CONFIRMED)
+            ->whereIn('payment_status', [
+                SalesDocument::PAYMENT_UNPAID,
+                SalesDocument::PAYMENT_PARTIAL,
+            ])
+            ->when($warehouseId, fn ($query, $value) => $query->where('warehouse_id', $value))
+            ->withSum('paymentAllocations as amount_paid', 'amount')
+            ->get()
+            ->sum(
+                fn (SalesDocument $document) => max(
+                    0,
+                    round((float) $document->total - (float) ($document->amount_paid ?? 0), 4),
+                ),
+            );
 
         $ordersToday = (int) SalesQuotation::query()
             ->whereDate('issue_date', $today)
@@ -103,6 +152,24 @@ class DashboardController extends Controller
             ];
         })->values()->all();
 
+        $collectionsTrendRaw = (clone $collectionsBase)
+            ->selectRaw('DATE(created_at) as day, SUM(amount) as amount')
+            ->whereDate('created_at', '>=', $start7d)
+            ->whereDate('created_at', '<=', $today)
+            ->groupByRaw('DATE(created_at)')
+            ->pluck('amount', 'day');
+
+        $collectionsTrend = collect(range(0, 6))->map(function (int $offset) use ($start7d, $collectionsTrendRaw) {
+            $date = $start7d->copy()->addDays($offset);
+            $key = $date->toDateString();
+
+            return [
+                'date' => $key,
+                'label' => $date->translatedFormat('D'),
+                'amount' => round((float) ($collectionsTrendRaw[$key] ?? 0), 2),
+            ];
+        })->values()->all();
+
         $categoryShare = SalesDocumentLine::query()
             ->selectRaw("COALESCE(product_categories.name, 'Sin categoría') as category, SUM(sales_document_lines.line_total) as amount")
             ->join('sales_documents', 'sales_documents.id', '=', 'sales_document_lines.sales_document_id')
@@ -110,7 +177,6 @@ class DashboardController extends Controller
             ->leftJoin('products', 'products.id', '=', 'product_variants.product_id')
             ->leftJoin('product_categories', 'product_categories.id', '=', 'products.category_id')
             ->where('sales_documents.status', SalesDocument::STATUS_CONFIRMED)
-            ->where('sales_documents.is_internal', false)
             ->whereDate('sales_documents.issue_date', '>=', $startPeriod)
             ->when($warehouseId, fn ($query, $value) => $query->where('sales_documents.warehouse_id', $value))
             ->groupBy('category')
@@ -130,7 +196,6 @@ class DashboardController extends Controller
             ->leftJoin('product_variants', 'product_variants.id', '=', 'sales_document_lines.product_variant_id')
             ->leftJoin('products', 'products.id', '=', 'product_variants.product_id')
             ->where('sales_documents.status', SalesDocument::STATUS_CONFIRMED)
-            ->where('sales_documents.is_internal', false)
             ->whereDate('sales_documents.issue_date', '>=', $startPeriod)
             ->when($warehouseId, fn ($query, $value) => $query->where('sales_documents.warehouse_id', $value))
             ->groupBy('product_name')
@@ -163,6 +228,7 @@ class DashboardController extends Controller
 
         $salesByDocumentType = (clone $salesDocsBase)
             ->selectRaw("CASE
+                WHEN is_internal = true THEN 'Venta rápida'
                 WHEN sunat_document_type_code = '01' THEN 'Factura'
                 WHEN sunat_document_type_code = '03' THEN 'Boleta'
                 ELSE 'Otro'
@@ -223,8 +289,15 @@ class DashboardController extends Controller
                 'documents_period' => $documentsCurrentPeriod,
                 'quotes_period' => $quotesCurrentPeriod,
                 'conversion_rate' => $conversionRate,
+                'collections_today' => round($collectionsToday, 2),
+                'collections_period' => round($collectionsCurrentPeriod, 2),
+                'collections_prev_period' => round($collectionsPrevPeriod, 2),
+                'collections_variation' => $collectionsVariation,
+                'collections_count_period' => $collectionsCountPeriod,
+                'receivable_balance' => round($receivableBalance, 2),
             ],
             'salesTrend' => $salesTrend,
+            'collectionsTrend' => $collectionsTrend,
             'categoryShare' => $categoryShare,
             'topProducts' => $topProducts,
             'monthlyPerformance' => $monthlyPerformance,
