@@ -1,21 +1,29 @@
 import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
-import Heading from '@/components/heading';
+import { chokoInputClass, chokoLabelClass } from '@/components/form/field-styles';
+import { SettingsSectionCard } from '@/components/settings/settings-section-card';
 import InputError from '@/components/input-error';
 import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
 import ManagePasskeys from '@/components/manage-passkeys';
 import type { Props as ManageTwoFactorProps } from '@/components/manage-two-factor';
 import ManageTwoFactor from '@/components/manage-two-factor';
 import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { edit } from '@/routes/security';
 
 type Props = {
     passwordRules: string;
 } & ManagePasskeysProps &
     ManageTwoFactorProps;
+
+const saveButtonClass = cn(
+    'inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-5',
+    'bg-linear-to-r from-[#ec4899] to-[#7c3aed] text-sm font-bold text-white',
+    'shadow-[0_10px_24px_-12px_rgba(124,58,237,0.75)] transition hover:opacity-95',
+    'disabled:pointer-events-none disabled:opacity-60',
+);
 
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
@@ -28,11 +36,16 @@ export default function Security(props: Props) {
             <h1 className="sr-only">Configuración de seguridad</h1>
 
             <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Actualizar contraseña"
-                    description="Usa una contraseña larga y segura para proteger tu cuenta"
-                />
+                <SettingsSectionCard>
+                    <header className="mb-6">
+                        <h2 className="text-lg font-black text-[#4c1d95]">
+                            Actualizar contraseña
+                        </h2>
+                        <p className="mt-1 text-sm text-[#7c6f8a]">
+                            Usa una contraseña larga y segura para proteger tu
+                            cuenta.
+                        </p>
+                    </header>
 
                 <Form
                     {...SecurityController.update.form()}
@@ -54,20 +67,23 @@ export default function Security(props: Props) {
                             currentPasswordInput.current?.focus();
                         }
                     }}
-                    className="space-y-6"
+                    className="space-y-5"
                 >
                     {({ errors, processing }) => (
                         <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="current_password">
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="current_password"
+                                    className={cn('text-sm', chokoLabelClass)}
+                                >
                                     Contraseña actual
-                                </Label>
+                                </label>
 
                                 <PasswordInput
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
-                                    className="mt-1 block w-full"
+                                    className={chokoInputClass}
                                     autoComplete="current-password"
                                     placeholder="Contraseña actual"
                                 />
@@ -75,14 +91,19 @@ export default function Security(props: Props) {
                                 <InputError message={errors.current_password} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Nueva contraseña</Label>
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="password"
+                                    className={cn('text-sm', chokoLabelClass)}
+                                >
+                                    Nueva contraseña
+                                </label>
 
                                 <PasswordInput
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
-                                    className="mt-1 block w-full"
+                                    className={chokoInputClass}
                                     autoComplete="new-password"
                                     placeholder="Nueva contraseña"
                                     passwordrules={props.passwordRules}
@@ -91,15 +112,18 @@ export default function Security(props: Props) {
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="password_confirmation"
+                                    className={cn('text-sm', chokoLabelClass)}
+                                >
                                     Confirmar contraseña
-                                </Label>
+                                </label>
 
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
-                                    className="mt-1 block w-full"
+                                    className={chokoInputClass}
                                     autoComplete="new-password"
                                     placeholder="Confirmar contraseña"
                                     passwordrules={props.passwordRules}
@@ -110,17 +134,21 @@ export default function Security(props: Props) {
                                 />
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <Button
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
                                     disabled={processing}
                                     data-test="update-password-button"
+                                    className={saveButtonClass}
                                 >
-                                    Guardar
-                                </Button>
+                                    {processing && <Spinner />}
+                                    Guardar cambios
+                                </button>
                             </div>
                         </>
                     )}
                 </Form>
+                </SettingsSectionCard>
             </div>
 
             <ManageTwoFactor

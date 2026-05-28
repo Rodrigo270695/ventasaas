@@ -1,12 +1,10 @@
-import { Form, Head, usePage } from '@inertiajs/react';
-import { Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import DeleteUser from '@/components/delete-user';
-import Heading from '@/components/heading';
+import { chokoInputClass, chokoLabelClass } from '@/components/form/field-styles';
+import { SettingsSectionCard } from '@/components/settings/settings-section-card';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { Auth } from '@/types';
@@ -14,6 +12,13 @@ import type { Auth } from '@/types';
 type PageProps = {
     auth: Auth;
 };
+
+const saveButtonClass = cn(
+    'inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-5',
+    'bg-linear-to-r from-[#ec4899] to-[#7c3aed] text-sm font-bold text-white',
+    'shadow-[0_10px_24px_-12px_rgba(124,58,237,0.75)] transition hover:opacity-95',
+    'disabled:pointer-events-none disabled:opacity-60',
+);
 
 export default function Profile({
     mustVerifyEmail,
@@ -30,100 +35,101 @@ export default function Profile({
 
             <h1 className="sr-only">Configuración de perfil</h1>
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Perfil"
-                    description="Actualiza tu nombre y correo electrónico"
-                />
+            <SettingsSectionCard>
+                <header className="mb-6">
+                    <h2 className="text-lg font-black text-[#4c1d95]">Perfil</h2>
+                    <p className="mt-1 text-sm text-[#7c6f8a]">
+                        Actualiza tu nombre y correo electrónico.
+                    </p>
+                </header>
 
                 <Form
                     {...ProfileController.update.form()}
                     options={{
                         preserveScroll: true,
                     }}
-                    className="space-y-6"
+                    className="space-y-5"
                 >
                     {({ processing, errors }) => (
                         <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Nombre</Label>
-
-                                <Input
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="name"
+                                    className={cn('text-sm', chokoLabelClass)}
+                                >
+                                    Nombre
+                                </label>
+                                <input
                                     id="name"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.name}
                                     name="name"
                                     required
                                     autoComplete="name"
+                                    defaultValue={auth.user.name}
                                     placeholder="Nombre completo"
+                                    className={chokoInputClass}
                                 />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.name}
-                                />
+                                <InputError message={errors.name} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Correo electrónico</Label>
-
-                                <Input
+                            <div className="space-y-2">
+                                <label
+                                    htmlFor="email"
+                                    className={cn('text-sm', chokoLabelClass)}
+                                >
+                                    Correo electrónico
+                                </label>
+                                <input
                                     id="email"
-                                    type="email"
-                                    className="mt-1 block w-full"
-                                    defaultValue={auth.user.email}
                                     name="email"
+                                    type="email"
                                     required
                                     autoComplete="username"
+                                    defaultValue={auth.user.email}
                                     placeholder="Correo electrónico"
+                                    className={chokoInputClass}
                                 />
-
-                                <InputError
-                                    className="mt-2"
-                                    message={errors.email}
-                                />
+                                <InputError message={errors.email} />
                             </div>
 
                             {mustVerifyEmail &&
                                 auth.user.email_verified_at === null && (
-                                    <div>
-                                        <p className="-mt-4 text-sm text-muted-foreground">
-                                            Tu correo electrónico no está verificado.{` `}
+                                    <div className="rounded-2xl border border-amber-200/80 bg-amber-50/80 px-4 py-3">
+                                        <p className="text-sm text-[#92400e]">
+                                            Tu correo electrónico no está
+                                            verificado.{' '}
                                             <Link
                                                 href={send()}
                                                 as="button"
-                                                className="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                                className="cursor-pointer font-semibold text-[#7c3aed] underline-offset-2 hover:underline"
                                             >
-                                                Haz clic aquí para reenviar el
-                                                correo de verificación.
+                                                Reenviar correo de verificación
                                             </Link>
                                         </p>
 
-                                        {status ===
-                                            'verification-link-sent' && (
-                                            <div className="mt-2 text-sm font-medium text-green-600">
+                                        {status === 'verification-link-sent' && (
+                                            <p className="mt-2 text-sm font-semibold text-emerald-700">
                                                 Se envió un nuevo enlace de
                                                 verificación a tu correo.
-                                            </div>
+                                            </p>
                                         )}
                                     </div>
                                 )}
 
-                            <div className="flex items-center gap-4">
-                                <Button
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
                                     disabled={processing}
                                     data-test="update-profile-button"
+                                    className={saveButtonClass}
                                 >
-                                    Guardar
-                                </Button>
+                                    {processing && <Spinner />}
+                                    Guardar cambios
+                                </button>
                             </div>
                         </>
                     )}
                 </Form>
-            </div>
-
-            <DeleteUser />
+            </SettingsSectionCard>
         </>
     );
 }
