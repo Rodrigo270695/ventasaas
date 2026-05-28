@@ -34,6 +34,10 @@ export function StoreSettingsSummary({ settings }: Props) {
             <Field label="Ubigeo" value={settings.ubigeo} />
             <Field label="Dirección" value={settings.direccion || '—'} />
             <Field
+                label="WhatsApp de pedidos"
+                value={settings.whatsapp_number || 'Sin configurar'}
+            />
+            <Field
                 label="Régimen tributario"
                 value={labelForTaxRegime(settings.tax_regime)}
             />

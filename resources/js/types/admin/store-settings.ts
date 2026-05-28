@@ -16,6 +16,7 @@ export type StoreSettingsRow = {
     razon_social: string;
     ubigeo: string;
     direccion: string | null;
+    whatsapp_number: string | null;
     tax_regime: string;
     billing_channel: string;
     sunat_environment: string;
@@ -34,6 +35,7 @@ export type StoreSettingsFormValues = {
     razon_social: string;
     ubigeo: string;
     direccion: string;
+    whatsapp_number: string;
     tax_regime: string;
     billing_channel: string;
     sunat_environment: string;

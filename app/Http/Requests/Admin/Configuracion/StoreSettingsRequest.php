@@ -25,6 +25,7 @@ class StoreSettingsRequest extends FormRequest
             'razon_social' => ['required', 'string', 'max:255'],
             'ubigeo' => ['required', 'string', 'digits:6'],
             'direccion' => ['nullable', 'string', 'max:500'],
+            'whatsapp_number' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\s()-]+$/'],
             'tax_regime' => ['required', 'string', Rule::in(['mype', 'general', 'special', 'nrus'])],
             'billing_channel' => [
                 'required',
@@ -61,6 +62,7 @@ class StoreSettingsRequest extends FormRequest
             'razon_social' => 'razón social',
             'ubigeo' => 'ubigeo',
             'direccion' => 'dirección',
+            'whatsapp_number' => 'WhatsApp de pedidos',
             'tax_regime' => 'régimen tributario',
             'billing_channel' => 'canal de facturación',
             'sunat_environment' => 'ambiente SUNAT',
@@ -78,6 +80,14 @@ class StoreSettingsRequest extends FormRequest
         if ($this->has('remove_certificate')) {
             $this->merge([
                 'remove_certificate' => $this->boolean('remove_certificate'),
+            ]);
+        }
+
+        if ($this->has('whatsapp_number')) {
+            $digits = preg_replace('/\D+/', '', (string) $this->input('whatsapp_number')) ?? '';
+
+            $this->merge([
+                'whatsapp_number' => $digits !== '' ? $digits : null,
             ]);
         }
     }

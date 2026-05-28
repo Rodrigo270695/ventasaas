@@ -19,6 +19,7 @@ class CfgStoreSetting extends Model
         'razon_social',
         'ubigeo',
         'direccion',
+        'whatsapp_number',
         'tax_regime',
         'billing_channel',
         'sunat_environment',

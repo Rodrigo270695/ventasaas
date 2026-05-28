@@ -63,6 +63,7 @@ function resolveForm(
             razon_social: settings.razon_social,
             ubigeo: settings.ubigeo,
             direccion: settings.direccion ?? '',
+            whatsapp_number: settings.whatsapp_number ?? '',
             tax_regime: settings.tax_regime,
             billing_channel: settings.billing_channel,
             sunat_environment: settings.sunat_environment,
@@ -324,6 +325,23 @@ export function StoreSettingsFormModal({
                                         }
                                         error={message('direccion')}
                                         disabled={processing}
+                                    />
+                                    <FormTextField
+                                        id="store-whatsapp"
+                                        name="whatsapp_number"
+                                        label="WhatsApp de pedidos"
+                                        value={form.whatsapp_number}
+                                        onChange={(v) =>
+                                            updateField(
+                                                'whatsapp_number',
+                                                v.replace(/\D/g, '').slice(0, 15),
+                                            )
+                                        }
+                                        placeholder="999888777"
+                                        hint="Número para recibir pedidos del catálogo público. Ej: 999888777 (Perú)."
+                                        error={message('whatsapp_number')}
+                                        disabled={processing}
+                                        fieldClassName="sm:col-span-2"
                                     />
                                 </FormSection>
 

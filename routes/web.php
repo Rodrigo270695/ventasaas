@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WelcomeController;
 
 // Vitrina pública: catálogo / venta al cliente (sin login)
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', WelcomeController::class)->name('home');
 
 Route::get(
     'compras/orden/confirmar/{token}',
