@@ -81,6 +81,14 @@ export const SETTINGS_PERMISSIONS = {
     MANAGE: 'settings.manage',
 } as const;
 
+/** Permisos de fotos de portada del catálogo público. */
+export const STORE_COVERS_PERMISSIONS = {
+    VIEW: 'store_covers.view',
+    CREATE: 'store_covers.create',
+    UPDATE: 'store_covers.update',
+    DELETE: 'store_covers.delete',
+} as const;
+
 /** Permisos del módulo de socios (clientes y proveedores). */
 export const PARTIES_PERMISSIONS = {
     VIEW: 'parties.view',

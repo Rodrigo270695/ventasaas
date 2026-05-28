@@ -7,12 +7,18 @@ use App\Models\PriceList;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
+use App\Models\StoreCoverSlide;
+use App\Support\StoreCoverStorage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class WelcomeController extends Controller
 {
+    public function __construct(
+        private readonly StoreCoverStorage $covers,
+    ) {}
+
     public function __invoke(Request $request): Response
     {
         $store = CfgStoreSetting::query()->first();
@@ -71,11 +77,27 @@ class WelcomeController extends Controller
             ->values()
             ->all();
 
+        $heroSlides = StoreCoverSlide::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn (StoreCoverSlide $slide) => [
+                'id' => $slide->id,
+                'title' => $slide->title,
+                'subtitle' => $slide->subtitle,
+                'image_url' => $this->covers->url($slide->image_path),
+            ])
+            ->filter(fn (array $slide) => filled($slide['image_url']))
+            ->values()
+            ->all();
+
         return Inertia::render('welcome', [
             'store' => [
                 'name' => $store?->razon_social,
                 'whatsapp_number' => $this->normalizeWhatsappNumber($store?->whatsapp_number),
             ],
+            'heroSlides' => $heroSlides,
             'categories' => $categories,
             'products' => $catalogProducts->values()->all(),
         ]);

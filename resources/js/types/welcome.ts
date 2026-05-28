@@ -28,8 +28,16 @@ export type WelcomeStore = {
     whatsapp_number: string | null;
 };
 
+export type WelcomeHeroSlide = {
+    id: string;
+    title: string | null;
+    subtitle: string | null;
+    image_url: string;
+};
+
 export type WelcomePageProps = {
     store: WelcomeStore;
+    heroSlides: WelcomeHeroSlide[];
     categories: CatalogCategory[];
     products: CatalogProduct[];
 };

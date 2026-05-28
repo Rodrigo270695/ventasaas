@@ -55,6 +55,11 @@ export const configuracionTiendaIndex = (): BreadcrumbItem[] => [
     { title: 'Datos de la tienda', href: '/admin/configuracion/tienda' },
 ];
 
+export const configuracionPortadaIndex = (): BreadcrumbItem[] => [
+    adminDashboard,
+    { title: 'Fotos de portada', href: '/admin/configuracion/portada' },
+];
+
 export const catalogoUnidadesIndex = (): BreadcrumbItem[] => [
     adminDashboard,
     { title: 'Unidades de medida', href: '/admin/catalogo/unidades' },

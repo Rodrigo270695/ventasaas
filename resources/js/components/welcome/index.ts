@@ -1,0 +1,14 @@
+export { CatalogCartPanel } from '@/components/welcome/catalog-cart-panel';
+export { CatalogProductCard } from '@/components/welcome/catalog-product-card';
+export { CatalogProductVisual } from '@/components/welcome/catalog-product-visual';
+export { WelcomeBackgroundDecor } from '@/components/welcome/welcome-background-decor';
+export { WelcomeCatalogEmptyState } from '@/components/welcome/welcome-catalog-empty-state';
+export { WelcomeCatalogSection } from '@/components/welcome/welcome-catalog-section';
+export { WelcomeCategoryChip } from '@/components/welcome/welcome-category-chip';
+export { WelcomeFeatureCard } from '@/components/welcome/welcome-feature-card';
+export { WelcomeFeaturesSection } from '@/components/welcome/welcome-features-section';
+export { WelcomeFooter } from '@/components/welcome/welcome-footer';
+export { WelcomeHeroCarousel } from '@/components/welcome/welcome-hero-carousel';
+export { WelcomeMobileCartFab } from '@/components/welcome/welcome-mobile-cart-fab';
+export { WelcomeNavbar } from '@/components/welcome/welcome-navbar';
+export { WelcomeNavbarBrand } from '@/components/welcome/welcome-navbar-brand';

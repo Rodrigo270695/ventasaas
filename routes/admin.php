@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\Catalogo\ProductVariantController;
 use App\Http\Controllers\Admin\Catalogo\VariantPackagingConversionController;
 use App\Http\Controllers\Admin\Catalogo\TaxProfileController;
 use App\Http\Controllers\Admin\Catalogo\UnitController;
+use App\Http\Controllers\Admin\Configuracion\StoreCoverSlideController;
 use App\Http\Controllers\Admin\Configuracion\StoreSettingsController;
 use App\Http\Controllers\Admin\Documentos\DocumentSeriesController;
 use App\Http\Controllers\Admin\Documentos\ElectronicDocumentController;
@@ -48,6 +49,14 @@ Route::middleware(['auth', 'verified'])
                 ->name('tienda.store');
             Route::put('tienda/{cfg_store_setting}', [StoreSettingsController::class, 'update'])
                 ->name('tienda.update');
+            Route::get('portada', [StoreCoverSlideController::class, 'index'])
+                ->name('portada.index');
+            Route::post('portada', [StoreCoverSlideController::class, 'store'])
+                ->name('portada.store');
+            Route::put('portada/{portada}', [StoreCoverSlideController::class, 'update'])
+                ->name('portada.update');
+            Route::delete('portada/{portada}', [StoreCoverSlideController::class, 'destroy'])
+                ->name('portada.destroy');
         });
 
         Route::prefix('catalogo')->name('catalogo.')->group(function () {

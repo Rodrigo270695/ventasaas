@@ -39,6 +39,7 @@ test('welcome page shows public catalog', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('welcome')
+            ->has('heroSlides', 0)
             ->has('products', 1)
             ->where('products.0.name', 'Chifles acevichados')
             ->where('store.whatsapp_number', '51999888777')

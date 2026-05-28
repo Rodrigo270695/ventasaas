@@ -136,6 +136,7 @@ export const adminNavGroups: NavGroup[] = [
         icon: Settings,
         items: [
             { title: 'Datos de la tienda', href: '/admin/configuracion/tienda' },
+            { title: 'Fotos de portada', href: '/admin/configuracion/portada' },
             { title: 'Sucursales', soon: true },
             { title: 'Tipos de cambio', soon: true },
             { title: 'Mi perfil', href: profileEdit() },

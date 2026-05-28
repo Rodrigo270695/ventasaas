@@ -19,6 +19,8 @@ type Props = {
     onFileChange: (file: File | null) => void;
     removeExisting: boolean;
     onRemoveExistingChange: (remove: boolean) => void;
+    pickLabel?: string;
+    changeLabel?: string;
 };
 
 export function FormFileField({
@@ -35,6 +37,8 @@ export function FormFileField({
     onFileChange,
     removeExisting,
     onRemoveExistingChange,
+    pickLabel = 'Seleccionar certificado (.p12)',
+    changeLabel = 'Cambiar archivo',
 }: Props) {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -139,9 +143,7 @@ export function FormFileField({
                     )}
                 >
                     <FileUp className="size-4 shrink-0" />
-                    {selectedFile || showExisting
-                        ? 'Cambiar archivo'
-                        : 'Seleccionar certificado (.p12)'}
+                    {selectedFile || showExisting ? changeLabel : pickLabel}
                 </Button>
             </div>
         </FormField>

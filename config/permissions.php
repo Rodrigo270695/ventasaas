@@ -34,6 +34,18 @@ return [
             ],
         ],
         [
+            'key' => 'store_covers',
+            'section' => 'Configuración',
+            'label' => 'Fotos de portada',
+            'implemented' => true,
+            'permissions' => [
+                ['name' => 'store_covers.view', 'label' => 'Ver fotos de portada'],
+                ['name' => 'store_covers.create', 'label' => 'Subir fotos de portada'],
+                ['name' => 'store_covers.update', 'label' => 'Editar fotos de portada'],
+                ['name' => 'store_covers.delete', 'label' => 'Eliminar fotos de portada'],
+            ],
+        ],
+        [
             'key' => 'catalog',
             'section' => 'Catálogo',
             'label' => 'Catálogo (acceso general)',
