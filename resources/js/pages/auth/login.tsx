@@ -133,3 +133,8 @@ export default function Login({ status, canResetPassword }: Props) {
         </>
     );
 }
+
+Login.layout = {
+    title: 'Panel interno',
+    description: 'Acceso exclusivo para el equipo de trabajo',
+};

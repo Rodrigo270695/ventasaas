@@ -21,14 +21,7 @@ createInertiaApp({
             case name === 'compras/orden-confirmada':
                 return null;
             case name === 'auth/login':
-                return (page) => (
-                    <ChokoLoginLayout
-                        title="Panel interno"
-                        description="Acceso exclusivo para el equipo de trabajo"
-                    >
-                        {page}
-                    </ChokoLoginLayout>
-                );
+                return ChokoLoginLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):
