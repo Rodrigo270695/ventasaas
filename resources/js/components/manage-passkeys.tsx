@@ -1,7 +1,12 @@
 import { router } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegistrationController';
-import Heading from '@/components/heading';
+import {
+    settingsInnerPanelClass,
+    settingsSectionDescriptionClass,
+    settingsSectionTitleClass,
+} from '@/components/settings/settings-button-styles';
+import { SettingsSectionCard } from '@/components/settings/settings-section-card';
 import PasskeyItem from '@/components/passkey-item';
 import PasskeyRegistration from '@/components/passkey-register';
 import type { Passkey } from '@/types/auth';
@@ -11,19 +16,21 @@ export type Props = {
     passkeys?: Passkey[];
 };
 
-const EmptyState = () => {
+function EmptyState() {
     return (
-        <div className="p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                <KeyRound className="h-7 w-7 text-muted-foreground" />
+        <div className="px-6 py-10 text-center">
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-[#fce7f3] to-[#f3e8ff] text-[#7c3aed] ring-2 ring-violet-100">
+                <KeyRound className="size-7" />
             </div>
-            <p className="font-medium">No passkeys yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-                Add a passkey to sign in without a password
+            <p className="font-bold text-[#4c1d95]">
+                Aún no tienes llaves de acceso
+            </p>
+            <p className="mt-1 text-sm text-[#7c6f8a]">
+                Agrega una para iniciar sesión sin contraseña.
             </p>
         </div>
     );
-};
+}
 
 export default function ManagePasskeys(props: Props) {
     const passkeys = props.passkeys ?? [];
@@ -44,14 +51,15 @@ export default function ManagePasskeys(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Passkeys"
-                description="Manage your passkeys for passwordless sign-in"
-            />
+        <SettingsSectionCard>
+            <header className="mb-5">
+                <h2 className={settingsSectionTitleClass}>Llaves de acceso</h2>
+                <p className={settingsSectionDescriptionClass}>
+                    Inicia sesión con huella, rostro o PIN del dispositivo.
+                </p>
+            </header>
 
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className={settingsInnerPanelClass}>
                 {passkeys.length > 0 ? (
                     passkeys.map((passkey) => (
                         <PasskeyItem
@@ -65,7 +73,9 @@ export default function ManagePasskeys(props: Props) {
                 )}
             </div>
 
-            <PasskeyRegistration onSuccess={handleRegisterSuccess} />
-        </div>
+            <div className="mt-5">
+                <PasskeyRegistration onSuccess={handleRegisterSuccess} />
+            </div>
+        </SettingsSectionCard>
     );
 }

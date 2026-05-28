@@ -2,14 +2,12 @@ import { Form } from '@inertiajs/react';
 import { Eye, EyeOff, LockKeyhole, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AlertError from '@/components/alert-error';
-import { Button } from '@/components/ui/button';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+    settingsInnerPanelClass,
+    settingsOutlineButtonClass,
+    settingsPrimaryButtonClass,
+} from '@/components/settings/settings-button-styles';
+import { Spinner } from '@/components/ui/spinner';
 import { regenerateRecoveryCodes } from '@/routes/two-factor';
 
 type Props = {
@@ -53,22 +51,30 @@ export default function TwoFactorRecoveryCodes({
     const RecoveryCodeIconComponent = codesAreVisible ? EyeOff : Eye;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex gap-3">
-                    <LockKeyhole className="size-4" aria-hidden="true" />
-                    2FA recovery codes
-                </CardTitle>
-                <CardDescription>
-                    Recovery codes let you regain access if you lose your 2FA
-                    device. Store them in a secure password manager.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col gap-3 select-none sm:flex-row sm:items-center sm:justify-between">
-                    <Button
+        <div className={settingsInnerPanelClass}>
+            <div className="border-b border-violet-100 px-5 py-4">
+                <div className="flex items-center gap-2.5">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-violet-100 text-[#7c3aed]">
+                        <LockKeyhole className="size-4" aria-hidden="true" />
+                    </span>
+                    <div>
+                        <h3 className="font-bold text-[#4c1d95]">
+                            Códigos de recuperación
+                        </h3>
+                        <p className="text-sm text-[#7c6f8a]">
+                            Guárdalos en un lugar seguro por si pierdes tu
+                            dispositivo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-4 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <button
+                        type="button"
                         onClick={toggleCodesVisibility}
-                        className="w-fit"
+                        className={settingsOutlineButtonClass}
                         aria-expanded={codesAreVisible}
                         aria-controls="recovery-codes-section"
                     >
@@ -76,8 +82,10 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? 'Hide' : 'View'} recovery codes
-                    </Button>
+                        {codesAreVisible
+                            ? 'Ocultar códigos'
+                            : 'Ver códigos de recuperación'}
+                    </button>
 
                     {canRegenerateCodes && (
                         <Form
@@ -86,33 +94,41 @@ export default function TwoFactorRecoveryCodes({
                             onSuccess={fetchRecoveryCodes}
                         >
                             {({ processing }) => (
-                                <Button
-                                    variant="secondary"
+                                <button
                                     type="submit"
                                     disabled={processing}
+                                    className={settingsPrimaryButtonClass}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> Regenerate codes
-                                </Button>
+                                    <span className="relative flex items-center gap-2">
+                                        {processing ? (
+                                            <Spinner className="text-white" />
+                                        ) : (
+                                            <RefreshCw className="size-4" />
+                                        )}
+                                        Regenerar códigos
+                                    </span>
+                                </button>
                             )}
                         </Form>
                     )}
                 </div>
+
                 <div
                     id="recovery-codes-section"
                     className={`relative overflow-hidden transition-all duration-300 ${codesAreVisible ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}
                     aria-hidden={!codesAreVisible}
                 >
-                    <div className="mt-3 space-y-3">
+                    <div className="space-y-3">
                         {errors?.length ? (
                             <AlertError errors={errors} />
                         ) : (
                             <>
                                 <div
                                     ref={codesSectionRef}
-                                    className="grid gap-1 rounded-lg bg-muted p-4 font-mono text-sm"
+                                    className="grid gap-1 rounded-xl border border-violet-100 bg-white p-4 font-mono text-sm text-[#4c1d95]"
                                     role="list"
-                                    aria-label="Recovery codes"
+                                    aria-label="Códigos de recuperación"
                                 >
                                     {recoveryCodesList.length ? (
                                         recoveryCodesList.map((code, index) => (
@@ -127,14 +143,14 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label="Loading recovery codes"
+                                            aria-label="Cargando códigos de recuperación"
                                         >
                                             {Array.from(
                                                 { length: 8 },
                                                 (_, index) => (
                                                     <div
                                                         key={index}
-                                                        className="h-4 animate-pulse rounded bg-muted-foreground/20"
+                                                        className="h-4 animate-pulse rounded bg-violet-100"
                                                         aria-hidden="true"
                                                     />
                                                 ),
@@ -143,22 +159,22 @@ export default function TwoFactorRecoveryCodes({
                                     )}
                                 </div>
 
-                                <div className="text-xs text-muted-foreground select-none">
-                                    <p id="regenerate-warning">
-                                        Each recovery code can be used once to
-                                        access your account and will be removed
-                                        after use. If you need more, click{' '}
-                                        <span className="font-bold">
-                                            Regenerate codes
-                                        </span>{' '}
-                                        above.
-                                    </p>
-                                </div>
+                                <p
+                                    id="regenerate-warning"
+                                    className="text-xs leading-relaxed text-[#9d8fb0]"
+                                >
+                                    Cada código solo se puede usar una vez. Si
+                                    necesitas más, pulsa{' '}
+                                    <span className="font-bold text-[#7c3aed]">
+                                        Regenerar códigos
+                                    </span>
+                                    .
+                                </p>
                             </>
                         )}
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

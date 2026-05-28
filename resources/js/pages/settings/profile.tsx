@@ -1,6 +1,7 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { chokoInputClass, chokoLabelClass } from '@/components/form/field-styles';
+import { settingsPrimaryButtonClass, settingsSectionDescriptionClass, settingsSectionTitleClass } from '@/components/settings/settings-button-styles';
 import { SettingsSectionCard } from '@/components/settings/settings-section-card';
 import InputError from '@/components/input-error';
 import { Spinner } from '@/components/ui/spinner';
@@ -12,13 +13,6 @@ import type { Auth } from '@/types';
 type PageProps = {
     auth: Auth;
 };
-
-const saveButtonClass = cn(
-    'inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-5',
-    'bg-linear-to-r from-[#ec4899] to-[#7c3aed] text-sm font-bold text-white',
-    'shadow-[0_10px_24px_-12px_rgba(124,58,237,0.75)] transition hover:opacity-95',
-    'disabled:pointer-events-none disabled:opacity-60',
-);
 
 export default function Profile({
     mustVerifyEmail,
@@ -37,8 +31,8 @@ export default function Profile({
 
             <SettingsSectionCard>
                 <header className="mb-6">
-                    <h2 className="text-lg font-black text-[#4c1d95]">Perfil</h2>
-                    <p className="mt-1 text-sm text-[#7c6f8a]">
+                    <h2 className={settingsSectionTitleClass}>Perfil</h2>
+                    <p className={settingsSectionDescriptionClass}>
                         Actualiza tu nombre y correo electrónico.
                     </p>
                 </header>
@@ -120,7 +114,7 @@ export default function Profile({
                                     type="submit"
                                     disabled={processing}
                                     data-test="update-profile-button"
-                                    className={saveButtonClass}
+                                    className={settingsPrimaryButtonClass}
                                 >
                                     {processing && <Spinner />}
                                     Guardar cambios

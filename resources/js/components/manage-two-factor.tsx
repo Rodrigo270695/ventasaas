@@ -1,10 +1,17 @@
 import { Form } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import Heading from '@/components/heading';
+import {
+    settingsDangerButtonClass,
+    settingsMutedTextClass,
+    settingsPrimaryButtonClass,
+    settingsSectionDescriptionClass,
+    settingsSectionTitleClass,
+} from '@/components/settings/settings-button-styles';
+import { SettingsSectionCard } from '@/components/settings/settings-section-card';
 import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
-import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { disable, enable } from '@/routes/two-factor';
 
@@ -45,33 +52,36 @@ export default function ManageTwoFactor(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Two-factor authentication"
-                description="Manage your two-factor authentication settings"
-            />
+        <SettingsSectionCard>
+            <header className="mb-5">
+                <h2 className={settingsSectionTitleClass}>
+                    Autenticación en dos pasos
+                </h2>
+                <p className={settingsSectionDescriptionClass}>
+                    Protege tu cuenta con un código adicional al iniciar sesión.
+                </p>
+            </header>
+
             {twoFactorEnabled ? (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                <div className="space-y-5">
+                    <p className={settingsMutedTextClass}>
+                        Al iniciar sesión se te pedirá un código de tu app
+                        autenticadora (TOTP), como Google Authenticator o
+                        similar.
                     </p>
 
-                    <div className="relative inline">
-                        <Form {...disable.form()}>
-                            {({ processing }) => (
-                                <Button
-                                    variant="destructive"
-                                    type="submit"
-                                    disabled={processing}
-                                >
-                                    Disable 2FA
-                                </Button>
-                            )}
-                        </Form>
-                    </div>
+                    <Form {...disable.form()}>
+                        {({ processing }) => (
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className={settingsDangerButtonClass}
+                            >
+                                {processing && <Spinner />}
+                                Desactivar 2FA
+                            </button>
+                        )}
+                    </Form>
 
                     <TwoFactorRecoveryCodes
                         recoveryCodesList={recoveryCodesList}
@@ -80,33 +90,49 @@ export default function ManageTwoFactor(props: Props) {
                     />
                 </div>
             ) : (
-                <div className="flex flex-col items-start justify-start space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                <div className="space-y-5">
+                    <p className={settingsMutedTextClass}>
+                        Al activar la autenticación en dos pasos, necesitarás un
+                        código de tu app autenticadora cada vez que inicies
+                        sesión.
                     </p>
 
-                    <div>
-                        {hasSetupData ? (
-                            <Button onClick={() => setShowSetupModal(true)}>
-                                <ShieldCheck />
-                                Continue setup
-                            </Button>
-                        ) : (
-                            <Form
-                                {...enable.form()}
-                                onSuccess={() => setShowSetupModal(true)}
-                            >
-                                {({ processing }) => (
-                                    <Button type="submit" disabled={processing}>
-                                        Enable 2FA
-                                    </Button>
-                                )}
-                            </Form>
-                        )}
-                    </div>
+                    {hasSetupData ? (
+                        <button
+                            type="button"
+                            onClick={() => setShowSetupModal(true)}
+                            className={settingsPrimaryButtonClass}
+                        >
+                            <span className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/5 via-white/10 to-white/25" />
+                            <span className="relative flex items-center gap-2">
+                                <ShieldCheck className="size-4" />
+                                Continuar configuración
+                            </span>
+                        </button>
+                    ) : (
+                        <Form
+                            {...enable.form()}
+                            onSuccess={() => setShowSetupModal(true)}
+                        >
+                            {({ processing }) => (
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className={settingsPrimaryButtonClass}
+                                >
+                                    <span className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/5 via-white/10 to-white/25" />
+                                    <span className="relative flex items-center gap-2">
+                                        {processing ? (
+                                            <Spinner className="text-white" />
+                                        ) : (
+                                            <ShieldCheck className="size-4" />
+                                        )}
+                                        Activar 2FA
+                                    </span>
+                                </button>
+                            )}
+                        </Form>
+                    )}
                 </div>
             )}
 
@@ -121,6 +147,6 @@ export default function ManageTwoFactor(props: Props) {
                 fetchSetupData={fetchSetupData}
                 errors={errors}
             />
-        </div>
+        </SettingsSectionCard>
     );
 }

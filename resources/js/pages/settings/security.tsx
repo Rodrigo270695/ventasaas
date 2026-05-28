@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import { chokoInputClass, chokoLabelClass } from '@/components/form/field-styles';
+import { settingsPrimaryButtonClass, settingsSectionDescriptionClass, settingsSectionTitleClass } from '@/components/settings/settings-button-styles';
 import { SettingsSectionCard } from '@/components/settings/settings-section-card';
 import InputError from '@/components/input-error';
 import type { Props as ManagePasskeysProps } from '@/components/manage-passkeys';
@@ -18,13 +19,6 @@ type Props = {
 } & ManagePasskeysProps &
     ManageTwoFactorProps;
 
-const saveButtonClass = cn(
-    'inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl px-5',
-    'bg-linear-to-r from-[#ec4899] to-[#7c3aed] text-sm font-bold text-white',
-    'shadow-[0_10px_24px_-12px_rgba(124,58,237,0.75)] transition hover:opacity-95',
-    'disabled:pointer-events-none disabled:opacity-60',
-);
-
 export default function Security(props: Props) {
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
@@ -38,10 +32,10 @@ export default function Security(props: Props) {
             <div className="space-y-6">
                 <SettingsSectionCard>
                     <header className="mb-6">
-                        <h2 className="text-lg font-black text-[#4c1d95]">
+                        <h2 className={settingsSectionTitleClass}>
                             Actualizar contraseña
                         </h2>
-                        <p className="mt-1 text-sm text-[#7c6f8a]">
+                        <p className={settingsSectionDescriptionClass}>
                             Usa una contraseña larga y segura para proteger tu
                             cuenta.
                         </p>
@@ -139,7 +133,7 @@ export default function Security(props: Props) {
                                     type="submit"
                                     disabled={processing}
                                     data-test="update-password-button"
-                                    className={saveButtonClass}
+                                    className={settingsPrimaryButtonClass}
                                 >
                                     {processing && <Spinner />}
                                     Guardar cambios
@@ -149,18 +143,18 @@ export default function Security(props: Props) {
                     )}
                 </Form>
                 </SettingsSectionCard>
+
+                <ManageTwoFactor
+                    canManageTwoFactor={props.canManageTwoFactor}
+                    requiresConfirmation={props.requiresConfirmation}
+                    twoFactorEnabled={props.twoFactorEnabled}
+                />
+
+                <ManagePasskeys
+                    canManagePasskeys={props.canManagePasskeys}
+                    passkeys={props.passkeys}
+                />
             </div>
-
-            <ManageTwoFactor
-                canManageTwoFactor={props.canManageTwoFactor}
-                requiresConfirmation={props.requiresConfirmation}
-                twoFactorEnabled={props.twoFactorEnabled}
-            />
-
-            <ManagePasskeys
-                canManagePasskeys={props.canManagePasskeys}
-                passkeys={props.passkeys}
-            />
         </>
     );
 }
