@@ -34,6 +34,10 @@ import {
     STOCK_BALANCES_PERMISSIONS,
 } from '@/lib/admin-permissions';
 import { STOCK_BALANCE_STAT_ICONS } from '@/lib/stock-balance-stat-icons';
+import {
+    STOCK_EXPIRY_FILTER_OPTIONS,
+    type StockExpiryFilter,
+} from '@/lib/stock-expiry-filter';
 import { index as saldosIndex } from '@/routes/admin/inventario/saldos';
 import type {
     StockBalanceRow,
@@ -50,6 +54,7 @@ export default function StockBalancesIndex({
     balances,
     warehouseOptions,
     selectedWarehouseId,
+    filters,
     variantOptions,
     priceListOptions = [],
     packagingConversions = [],
@@ -78,24 +83,51 @@ export default function StockBalancesIndex({
     });
 
     const warehouseId =
-        selectedWarehouseId ?? warehouseOptions[0]?.value ?? '';
+        filters.warehouse_id ??
+        selectedWarehouseId ??
+        warehouseOptions[0]?.value ??
+        '';
+
+    const expiryFilter = filters.expiry_filter ?? 'all';
+
+    const applyFilters = useCallback(
+        (next: {
+            warehouse_id?: string;
+            expiry_filter?: StockExpiryFilter;
+        }) => {
+            router.get(
+                saldosIndex.url({
+                    query: {
+                        warehouse_id: next.warehouse_id ?? warehouseId,
+                        expiry_filter: next.expiry_filter ?? expiryFilter,
+                    },
+                }),
+                {},
+                { preserveState: true, preserveScroll: true },
+            );
+        },
+        [warehouseId, expiryFilter],
+    );
+
+    const handleWarehouseChange = useCallback(
+        (value: string) => {
+            applyFilters({ warehouse_id: value });
+        },
+        [applyFilters],
+    );
+
+    const handleExpiryFilterChange = useCallback(
+        (value: StockExpiryFilter) => {
+            applyFilters({ expiry_filter: value });
+        },
+        [applyFilters],
+    );
 
     const canAdjust = can(STOCK_BALANCES_PERMISSIONS.ADJUST);
     const canSyncSalePrices =
         can(PRODUCTS_PERMISSIONS.UPDATE) ||
         can(PRICE_LISTS_PERMISSIONS.UPDATE);
     const didOpenDeepLink = useRef(false);
-
-    const handleWarehouseChange = useCallback(
-        (value: string) => {
-            router.get(
-                saldosIndex.url({ query: { warehouse_id: value } }),
-                {},
-                { preserveState: true, preserveScroll: true },
-            );
-        },
-        [],
-    );
 
     const openAdjust = useCallback((row?: StockBalanceRow) => {
         setAdjustPreset({
@@ -145,13 +177,14 @@ export default function StockBalancesIndex({
                 saldosIndex.url({
                     query: {
                         warehouse_id: warehouseId,
+                        expiry_filter: expiryFilter,
                         _reset: 1,
                     },
                 }),
                 { preserveScroll: true, replace: true },
             );
         }
-    }, [warehouseId]);
+    }, [warehouseId, expiryFilter]);
 
     const handleFilteredCountChange = useCallback((count: number) => {
         setFilteredCount(count);
@@ -161,7 +194,8 @@ export default function StockBalancesIndex({
         return stat.icon ?? STOCK_BALANCE_STAT_ICONS[stat.key];
     }, []);
 
-    const showFilteredBadge = filteredCount !== balances.length;
+    const showFilteredBadge =
+        expiryFilter !== 'all' || filteredCount !== balances.length;
 
     const warehouseFilter =
         warehouseOptions.length > 0 ? (
@@ -193,6 +227,45 @@ export default function StockBalancesIndex({
                 </SelectContent>
             </Select>
         ) : null;
+
+    const expiryFilterControl = (
+        <Select
+            value={expiryFilter}
+            onValueChange={(value) =>
+                handleExpiryFilterChange(value as StockExpiryFilter)
+            }
+        >
+            <SelectTrigger
+                id="stock-expiry-filter"
+                aria-label="Filtrar por vencimiento"
+                className={chokoSelectTriggerClass}
+            >
+                <SelectValue placeholder="Vencimiento…" />
+            </SelectTrigger>
+            <SelectContent
+                className={chokoSelectContentClass}
+                position="popper"
+                sideOffset={4}
+            >
+                {STOCK_EXPIRY_FILTER_OPTIONS.map((option) => (
+                    <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        className={chokoSelectItemClass}
+                    >
+                        {option.label}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+
+    const tableToolbar = (
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end xl:w-auto">
+            {expiryFilterControl}
+            {warehouseFilter}
+        </div>
+    );
 
     return (
         <div className="flex flex-1 flex-col gap-2 p-4 pb-6 md:gap-3 md:p-6 md:pb-6">
@@ -247,15 +320,39 @@ export default function StockBalancesIndex({
                 </PageHeaderTop>
 
                 <PageHeaderBadges>
-                    {stats.map((stat) => (
-                        <StatBadge
-                            key={stat.key}
-                            label={stat.label}
-                            value={stat.value}
-                            tone={stat.tone}
-                            icon={resolveStatIcon(stat)}
-                        />
-                    ))}
+                    {stats.map((stat) => {
+                        const expiryFilterForStat =
+                            stat.key === 'expiring'
+                                ? 'expiring'
+                                : stat.key === 'expired'
+                                  ? 'expired'
+                                  : null;
+
+                        return (
+                            <StatBadge
+                                key={stat.key}
+                                label={stat.label}
+                                value={stat.value}
+                                tone={stat.tone}
+                                icon={resolveStatIcon(stat)}
+                                active={
+                                    expiryFilterForStat !== null &&
+                                    expiryFilter === expiryFilterForStat
+                                }
+                                onClick={
+                                    expiryFilterForStat
+                                        ? () => {
+                                              handleExpiryFilterChange(
+                                                  expiryFilter === expiryFilterForStat
+                                                      ? 'all'
+                                                      : expiryFilterForStat,
+                                              );
+                                          }
+                                        : undefined
+                                }
+                            />
+                        );
+                    })}
                     {showFilteredBadge && (
                         <StatBadge
                             label="Resultados"
@@ -269,10 +366,11 @@ export default function StockBalancesIndex({
 
             <StockBalancesTable
                 balances={balances}
+                expiryFilter={expiryFilter}
                 canAdjust={canAdjust}
                 onAdjust={openAdjust}
                 onFilteredCountChange={handleFilteredCountChange}
-                toolbarEnd={warehouseFilter}
+                toolbarEnd={tableToolbar}
             />
 
             {canAdjust && warehouseId && (

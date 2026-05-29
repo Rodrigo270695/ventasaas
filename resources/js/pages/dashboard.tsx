@@ -35,6 +35,11 @@ import {
 } from '@/components/ui/select';
 import { ChartContainer } from '@/components/charts/chart-container';
 import { brandLogoSrc } from '@/lib/brand';
+import {
+    DASHBOARD_ALERT_FILTER_OPTIONS,
+    type DashboardAlertFilter,
+    type StockExpiryFilter,
+} from '@/lib/stock-expiry-filter';
 import { dashboard } from '@/routes';
 
 type DashboardProps = {
@@ -69,7 +74,7 @@ type DashboardProps = {
         minimum: number;
         level: 'critical' | 'warning';
     }>;
-    expiryAlerts: Array<{
+    expiringAlerts: Array<{
         variant_id: string;
         sku: string | null;
         product: string;
@@ -79,6 +84,21 @@ type DashboardProps = {
         days_until_expiry: number | null;
         level: 'critical' | 'warning';
     }>;
+    expiredAlerts: Array<{
+        variant_id: string;
+        sku: string | null;
+        product: string;
+        warehouse: string | null;
+        stock: number;
+        expires_at: string | null;
+        days_until_expiry: number | null;
+        level: 'critical' | 'warning';
+    }>;
+    inventoryAlertCounts: {
+        low_stock: number;
+        expiring: number;
+        expired: number;
+    };
     monthlyPerformance: Array<{
         month: string;
         amount: number;
@@ -90,6 +110,7 @@ type DashboardProps = {
     filters: {
         period: 7 | 30 | 90;
         warehouse_id: string | null;
+        alert_filter: DashboardAlertFilter;
     };
     warehouseOptions: Array<{
         value: string;
@@ -112,6 +133,46 @@ function money(value: number): string {
     return `S/ ${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function saldosExpiryUrl(
+    warehouseId: string | null,
+    expiryFilter: StockExpiryFilter,
+): string {
+    const params = new URLSearchParams({ expiry_filter: expiryFilter });
+    if (warehouseId) {
+        params.set('warehouse_id', warehouseId);
+    }
+    return `/admin/inventario/saldos?${params.toString()}`;
+}
+
+type ExpiryAlertItem = DashboardProps['expiringAlerts'][number];
+
+function ExpiryAlertCard({ item }: { item: ExpiryAlertItem }) {
+    return (
+        <div className="rounded-xl border border-orange-200 bg-white px-3 py-2">
+            <p className="font-medium text-[#3b2d4a]">{item.product}</p>
+            <p className="text-xs text-[#7c6f8a]">
+                {item.sku ?? 'SKU —'}
+                {item.warehouse ? ` · ${item.warehouse}` : ''} · Stock:{' '}
+                {item.stock.toFixed(2)} ·{' '}
+                <span
+                    className={
+                        item.level === 'critical'
+                            ? 'font-semibold text-rose-700'
+                            : 'font-semibold text-orange-700'
+                    }
+                >
+                    {item.level === 'critical'
+                        ? 'Vencido'
+                        : item.days_until_expiry === 0
+                          ? 'Vence hoy'
+                          : `Vence en ${item.days_until_expiry} día${item.days_until_expiry === 1 ? '' : 's'}`}
+                </span>
+                {item.expires_at ? ` (${item.expires_at})` : ''}
+            </p>
+        </div>
+    );
+}
+
 export default function Dashboard({
     kpis,
     salesTrend,
@@ -119,7 +180,9 @@ export default function Dashboard({
     categoryShare,
     topProducts,
     lowStockAlerts,
-    expiryAlerts,
+    expiringAlerts,
+    expiredAlerts,
+    inventoryAlertCounts,
     monthlyPerformance,
     salesByDocumentType,
     filters,
@@ -169,16 +232,29 @@ export default function Dashboard({
     const salesVariationPositive = kpis.sales_variation >= 0;
     const collectionsVariationPositive = kpis.collections_variation >= 0;
 
-    const handleFilterChange = (next: { period?: number; warehouse_id?: string | null }) => {
+    const handleFilterChange = (next: {
+        period?: number;
+        warehouse_id?: string | null;
+        alert_filter?: DashboardAlertFilter;
+    }) => {
         router.get(
             '/dashboard',
             {
                 period: next.period ?? filters.period,
                 warehouse_id: next.warehouse_id ?? filters.warehouse_id ?? '',
+                alert_filter: next.alert_filter ?? filters.alert_filter ?? 'all',
             },
             { preserveState: true, preserveScroll: true, replace: true },
         );
     };
+
+    const alertFilter = filters.alert_filter ?? 'all';
+    const showLowStockPanel =
+        alertFilter === 'all' || alertFilter === 'low_stock';
+    const showExpiringPanel =
+        alertFilter === 'all' || alertFilter === 'expiring';
+    const showExpiredPanel =
+        alertFilter === 'all' || alertFilter === 'expired';
 
     return (
         <>
@@ -201,7 +277,7 @@ export default function Dashboard({
                 </div>
 
                 <div
-                    className="grid gap-3 rounded-2xl border border-violet-100 bg-white p-4 shadow-sm md:grid-cols-2"
+                    className="grid gap-3 rounded-2xl border border-violet-100 bg-white p-4 shadow-sm md:grid-cols-3"
                     data-tour="dashboard-filters"
                 >
                     <label className="flex flex-col gap-1 text-sm">
@@ -243,6 +319,51 @@ export default function Dashboard({
                             </SelectContent>
                         </Select>
                     </label>
+                    <label className="flex flex-col gap-1 text-sm">
+                        <span className="font-semibold text-[#5b2d82]">Alertas de inventario</span>
+                        <Select
+                            value={alertFilter}
+                            onValueChange={(value) =>
+                                handleFilterChange({
+                                    alert_filter: value as DashboardAlertFilter,
+                                })
+                            }
+                        >
+                            <SelectTrigger className="w-full rounded-lg border-violet-200 text-[#3b2d4a] focus-visible:border-violet-400 focus-visible:ring-violet-200/70">
+                                <SelectValue placeholder="Tipo de alerta" />
+                            </SelectTrigger>
+                            <SelectContent align="start">
+                                {DASHBOARD_ALERT_FILTER_OPTIONS.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </label>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    <Link
+                        href={saldosExpiryUrl(filters.warehouse_id, 'expiring')}
+                        className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+                    >
+                        <CalendarClock className="size-3.5" />
+                        Por vencer ({inventoryAlertCounts.expiring})
+                    </Link>
+                    <Link
+                        href={saldosExpiryUrl(filters.warehouse_id, 'expired')}
+                        className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-800 transition hover:bg-orange-100"
+                    >
+                        <AlertTriangle className="size-3.5" />
+                        Vencidos ({inventoryAlertCounts.expired})
+                    </Link>
+                    <Link
+                        href="/admin/inventario/saldos"
+                        className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-semibold text-[#6d28d9] transition hover:bg-violet-100"
+                    >
+                        Ver stock por almacén
+                    </Link>
                 </div>
 
                 <div
@@ -481,96 +602,131 @@ export default function Dashboard({
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-3">
-                    <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
-                        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
-                            <div className="mb-3 flex items-center gap-2">
-                                <AlertTriangle className="size-4 text-amber-700" />
-                                <h2 className="text-sm font-bold text-amber-800">
-                                    Alertas de stock mínimo
-                                </h2>
+                    <div
+                        className={`grid gap-4 xl:col-span-2 ${
+                            alertFilter === 'all'
+                                ? 'md:grid-cols-2 xl:grid-cols-3'
+                                : 'md:grid-cols-1'
+                        }`}
+                    >
+                        {showLowStockPanel ? (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+                                <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle className="size-4 text-amber-700" />
+                                        <h2 className="text-sm font-bold text-amber-800">
+                                            Stock mínimo
+                                        </h2>
+                                    </div>
+                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                                        {inventoryAlertCounts.low_stock}
+                                    </span>
+                                </div>
+                                <div className="space-y-2">
+                                    {lowStockAlerts.length === 0 ? (
+                                        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                            Todo en orden. No hay alertas de stock mínimo.
+                                        </p>
+                                    ) : (
+                                        lowStockAlerts.map((item) => (
+                                            <div
+                                                key={item.variant_id}
+                                                className="rounded-xl border border-amber-200 bg-white px-3 py-2"
+                                            >
+                                                <p className="font-medium text-[#3b2d4a]">
+                                                    {item.product}
+                                                </p>
+                                                <p className="text-xs text-[#7c6f8a]">
+                                                    {item.sku ?? 'SKU —'} · Stock:{' '}
+                                                    <span
+                                                        className={
+                                                            item.level === 'critical'
+                                                                ? 'font-semibold text-rose-700'
+                                                                : 'font-semibold text-amber-700'
+                                                        }
+                                                    >
+                                                        {item.stock.toFixed(2)}
+                                                    </span>{' '}
+                                                    · Min: {item.minimum.toFixed(2)}
+                                                </p>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                {lowStockAlerts.length === 0 ? (
-                                    <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                                        Todo en orden. No hay alertas de stock mínimo.
-                                    </p>
-                                ) : (
-                                    lowStockAlerts.map((item) => (
-                                        <div
-                                            key={item.variant_id}
-                                            className="rounded-xl border border-amber-200 bg-white px-3 py-2"
-                                        >
-                                            <p className="font-medium text-[#3b2d4a]">
-                                                {item.product}
-                                            </p>
-                                            <p className="text-xs text-[#7c6f8a]">
-                                                {item.sku ?? 'SKU —'} · Stock:{' '}
-                                                <span
-                                                    className={
-                                                        item.level === 'critical'
-                                                            ? 'font-semibold text-rose-700'
-                                                            : 'font-semibold text-amber-700'
-                                                    }
-                                                >
-                                                    {item.stock.toFixed(2)}
-                                                </span>{' '}
-                                                · Min: {item.minimum.toFixed(2)}
-                                            </p>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
+                        ) : null}
 
-                        <div className="rounded-2xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm">
-                            <div className="mb-3 flex items-center gap-2">
-                                <CalendarClock className="size-4 text-orange-700" />
-                                <h2 className="text-sm font-bold text-orange-800">
-                                    Productos por vencer
-                                </h2>
+                        {showExpiringPanel ? (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+                                <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <CalendarClock className="size-4 text-amber-700" />
+                                        <h2 className="text-sm font-bold text-amber-800">
+                                            Por vencer
+                                        </h2>
+                                    </div>
+                                    <Link
+                                        href={saldosExpiryUrl(
+                                            filters.warehouse_id,
+                                            'expiring',
+                                        )}
+                                        className="text-[10px] font-semibold text-amber-800 underline-offset-2 hover:underline"
+                                    >
+                                        Ver todos
+                                    </Link>
+                                </div>
+                                <div className="space-y-2">
+                                    {expiringAlerts.length === 0 ? (
+                                        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                            No hay productos por vencer con stock.
+                                        </p>
+                                    ) : (
+                                        expiringAlerts.map((item) => (
+                                            <ExpiryAlertCard
+                                                key={`${item.variant_id}-${item.warehouse ?? 'all'}-expiring`}
+                                                item={item}
+                                            />
+                                        ))
+                                    )}
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                {expiryAlerts.length === 0 ? (
-                                    <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                                        No hay productos próximos a vencer con stock.
-                                    </p>
-                                ) : (
-                                    expiryAlerts.map((item) => (
-                                        <div
-                                            key={`${item.variant_id}-${item.warehouse ?? 'all'}`}
-                                            className="rounded-xl border border-orange-200 bg-white px-3 py-2"
-                                        >
-                                            <p className="font-medium text-[#3b2d4a]">
-                                                {item.product}
-                                            </p>
-                                            <p className="text-xs text-[#7c6f8a]">
-                                                {item.sku ?? 'SKU —'}
-                                                {item.warehouse
-                                                    ? ` · ${item.warehouse}`
-                                                    : ''}{' '}
-                                                · Stock: {item.stock.toFixed(2)} ·{' '}
-                                                <span
-                                                    className={
-                                                        item.level === 'critical'
-                                                            ? 'font-semibold text-rose-700'
-                                                            : 'font-semibold text-orange-700'
-                                                    }
-                                                >
-                                                    {item.level === 'critical'
-                                                        ? 'Vencido'
-                                                        : item.days_until_expiry === 0
-                                                          ? 'Vence hoy'
-                                                          : `Vence en ${item.days_until_expiry} día${item.days_until_expiry === 1 ? '' : 's'}`}
-                                                </span>
-                                                {item.expires_at
-                                                    ? ` (${item.expires_at})`
-                                                    : ''}
-                                            </p>
-                                        </div>
-                                    ))
-                                )}
+                        ) : null}
+
+                        {showExpiredPanel ? (
+                            <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 shadow-sm">
+                                <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <AlertTriangle className="size-4 text-rose-700" />
+                                        <h2 className="text-sm font-bold text-rose-800">
+                                            Vencidos
+                                        </h2>
+                                    </div>
+                                    <Link
+                                        href={saldosExpiryUrl(
+                                            filters.warehouse_id,
+                                            'expired',
+                                        )}
+                                        className="text-[10px] font-semibold text-rose-800 underline-offset-2 hover:underline"
+                                    >
+                                        Ver todos
+                                    </Link>
+                                </div>
+                                <div className="space-y-2">
+                                    {expiredAlerts.length === 0 ? (
+                                        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                            No hay productos vencidos con stock.
+                                        </p>
+                                    ) : (
+                                        expiredAlerts.map((item) => (
+                                            <ExpiryAlertCard
+                                                key={`${item.variant_id}-${item.warehouse ?? 'all'}-expired`}
+                                                item={item}
+                                            />
+                                        ))
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        ) : null}
                     </div>
                     <div className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
                         <h2 className="mb-3 text-sm font-bold text-[#5b2d82]">Accesos rápidos</h2>

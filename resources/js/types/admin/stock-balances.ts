@@ -4,6 +4,7 @@ import type {
 } from '@/components/form';
 import type { StatBadgeItem } from '@/components/page-header';
 import type { PriceListOption } from '@/types/admin/products';
+import type { StockExpiryFilter } from '@/lib/stock-expiry-filter';
 
 export type StockBalanceRow = {
     id: string;
@@ -30,7 +31,14 @@ export type StockBalanceRow = {
     has_expiry_alert: boolean;
 };
 
-export type StockBalanceStatKey = 'skus' | 'with_stock' | 'zero' | 'low' | 'expiry' | 'value';
+export type StockBalanceStatKey =
+    | 'skus'
+    | 'with_stock'
+    | 'zero'
+    | 'low'
+    | 'expiring'
+    | 'expired'
+    | 'value';
 
 export type StockBalanceStatItem = StatBadgeItem & {
     key: StockBalanceStatKey;
@@ -67,6 +75,10 @@ export type StockBalancesIndexPageProps = {
     priceListOptions?: PriceListOption[];
     packagingConversions?: PackagingConversionOption[];
     stats: StockBalanceStatItem[];
+    filters: {
+        warehouse_id: string | null;
+        expiry_filter: StockExpiryFilter;
+    };
     stockAdjustModal?: string | null;
     stockAdjustVariantId?: string | null;
     stockAdjustWarehouseId?: string | null;

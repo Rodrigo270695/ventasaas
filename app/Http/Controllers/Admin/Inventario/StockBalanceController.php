@@ -35,6 +35,11 @@ class StockBalanceController extends Controller
         }
 
         $warehouseId = $request->string('warehouse_id')->toString() ?: null;
+        $expiryFilter = $request->string('expiry_filter')->toString() ?: 'all';
+        $allowedExpiryFilters = ['all', 'expiring', 'expired', 'with_expiry_date'];
+        if (! in_array($expiryFilter, $allowedExpiryFilters, true)) {
+            $expiryFilter = 'all';
+        }
 
         $warehouses = Warehouse::query()
             ->where('is_active', true)
@@ -129,7 +134,12 @@ class StockBalanceController extends Controller
 
         $withStock = $rows->filter(fn (array $row) => (float) $row['quantity_on_hand'] > 0)->count();
         $lowStock = $rows->filter(fn (array $row) => $row['is_low_stock'] || $row['is_out_of_stock'])->count();
-        $expiring = $rows->filter(fn (array $row) => $row['has_expiry_alert'])->count();
+        $expiringSoon = $rows->filter(
+            fn (array $row) => (float) $row['quantity_on_hand'] > 0 && $row['is_expiring_soon'],
+        )->count();
+        $expiredCount = $rows->filter(
+            fn (array $row) => (float) $row['quantity_on_hand'] > 0 && $row['is_expired'],
+        )->count();
         $totalValue = $rows->reduce(
             fn (string $carry, array $row) => bcadd($carry, $row['stock_value'], 2),
             '0',
@@ -189,10 +199,16 @@ class StockBalanceController extends Controller
                     'tone' => 'pink',
                 ],
                 [
-                    'key' => 'expiry',
+                    'key' => 'expiring',
                     'label' => 'Por vencer',
-                    'value' => $expiring,
+                    'value' => $expiringSoon,
                     'tone' => 'amber',
+                ],
+                [
+                    'key' => 'expired',
+                    'label' => 'Vencidos',
+                    'value' => $expiredCount,
+                    'tone' => 'orange',
                 ],
                 [
                     'key' => 'value',
@@ -200,6 +216,10 @@ class StockBalanceController extends Controller
                     'value' => number_format((float) $totalValue, 2, '.', ''),
                     'tone' => 'cyan',
                 ],
+            ],
+            'filters' => [
+                'warehouse_id' => $warehouseId,
+                'expiry_filter' => $expiryFilter,
             ],
             'stockAdjustModal' => session()->pull('stockAdjustModal'),
             'stockAdjustVariantId' => session()->pull('stockAdjustVariantId')

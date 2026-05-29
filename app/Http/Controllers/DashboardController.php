@@ -30,6 +30,12 @@ class DashboardController extends Controller
         $warehouseId = $request->string('warehouse_id')->toString();
         $warehouseId = $warehouseId !== '' ? $warehouseId : null;
 
+        $alertFilter = $request->string('alert_filter')->toString() ?: 'all';
+        $allowedAlertFilters = ['all', 'low_stock', 'expiring', 'expired'];
+        if (! in_array($alertFilter, $allowedAlertFilters, true)) {
+            $alertFilter = 'all';
+        }
+
         $startPeriod = $today->copy()->subDays($period - 1);
         $startPrevPeriod = $startPeriod->copy()->subDays($period);
         $endPrevPeriod = $startPeriod->copy()->subDay();
@@ -265,7 +271,7 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
-        $expiryAlerts = StockBalance::query()
+        $expiryAlertsRaw = StockBalance::query()
             ->with([
                 'variant:id,product_id,sku,label,expires_at,expiry_alert_days',
                 'variant.product:id,name,track_stock,type',
@@ -278,7 +284,7 @@ class DashboardController extends Controller
                 ->where('type', Product::TYPE_GOOD))
             ->when($warehouseId, fn ($query, $value) => $query->where('warehouse_id', $value))
             ->get()
-            ->filter(function (StockBalance $balance) {
+            ->filter(function (StockBalance $balance) use ($today) {
                 $status = VariantExpiryStatus::evaluate(
                     $balance->variant?->expires_at,
                     $balance->variant?->expiry_alert_days,
@@ -288,26 +294,47 @@ class DashboardController extends Controller
                 return $status['level'] !== null;
             })
             ->sortBy(fn (StockBalance $balance) => $balance->variant?->expires_at)
-            ->take(8)
-            ->values()
-            ->map(function (StockBalance $balance) use ($today) {
-                $status = VariantExpiryStatus::evaluate(
-                    $balance->variant?->expires_at,
-                    $balance->variant?->expiry_alert_days,
-                    $today,
-                );
+            ->values();
 
-                return [
-                    'variant_id' => $balance->product_variant_id,
-                    'sku' => $balance->variant?->sku,
-                    'product' => trim(($balance->variant?->product?->name ?? 'Producto').' '.($balance->variant?->label ? '· '.$balance->variant?->label : '')),
-                    'warehouse' => $balance->warehouse?->name,
-                    'stock' => round((float) $balance->quantity_on_hand, 2),
-                    'expires_at' => VariantExpiryStatus::formatExpiresAt($balance->variant?->expires_at),
-                    'days_until_expiry' => $status['days_until_expiry'],
-                    'level' => $status['level'],
-                ];
-            })
+        $mapExpiryAlert = function (StockBalance $balance) use ($today) {
+            $status = VariantExpiryStatus::evaluate(
+                $balance->variant?->expires_at,
+                $balance->variant?->expiry_alert_days,
+                $today,
+            );
+
+            return [
+                'variant_id' => $balance->product_variant_id,
+                'sku' => $balance->variant?->sku,
+                'product' => trim(($balance->variant?->product?->name ?? 'Producto').' '.($balance->variant?->label ? '· '.$balance->variant?->label : '')),
+                'warehouse' => $balance->warehouse?->name,
+                'stock' => round((float) $balance->quantity_on_hand, 2),
+                'expires_at' => VariantExpiryStatus::formatExpiresAt($balance->variant?->expires_at),
+                'days_until_expiry' => $status['days_until_expiry'],
+                'level' => $status['level'],
+            ];
+        };
+
+        $expiringAlerts = $expiryAlertsRaw
+            ->filter(fn (StockBalance $balance) => VariantExpiryStatus::evaluate(
+                $balance->variant?->expires_at,
+                $balance->variant?->expiry_alert_days,
+                $today,
+            )['level'] === 'warning')
+            ->take(8)
+            ->map($mapExpiryAlert)
+            ->values()
+            ->all();
+
+        $expiredAlerts = $expiryAlertsRaw
+            ->filter(fn (StockBalance $balance) => VariantExpiryStatus::evaluate(
+                $balance->variant?->expires_at,
+                $balance->variant?->expiry_alert_days,
+                $today,
+            )['level'] === 'critical')
+            ->take(8)
+            ->map($mapExpiryAlert)
+            ->values()
             ->all();
 
         $warehouseOptions = Warehouse::query()
@@ -349,10 +376,17 @@ class DashboardController extends Controller
             'monthlyPerformance' => $monthlyPerformance,
             'salesByDocumentType' => $salesByDocumentType,
             'lowStockAlerts' => $lowStockAlerts,
-            'expiryAlerts' => $expiryAlerts,
+            'expiringAlerts' => $expiringAlerts,
+            'expiredAlerts' => $expiredAlerts,
+            'inventoryAlertCounts' => [
+                'low_stock' => count($lowStockAlerts),
+                'expiring' => count($expiringAlerts),
+                'expired' => count($expiredAlerts),
+            ],
             'filters' => [
                 'period' => $period,
                 'warehouse_id' => $warehouseId,
+                'alert_filter' => $alertFilter,
             ],
             'warehouseOptions' => $warehouseOptions,
         ]);

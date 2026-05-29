@@ -5,11 +5,16 @@ import type { DataTableColumn } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { formatDecimalDisplay } from '@/lib/format-decimal';
 import { expiryStatusLabel, formatExpiryDate } from '@/lib/expiry-display';
+import {
+    filterStockBalancesByExpiry,
+    type StockExpiryFilter,
+} from '@/lib/stock-expiry-filter';
 import { cn } from '@/lib/utils';
 import type { StockBalanceRow } from '@/types/admin/stock-balances';
 
 type Props = {
     balances: StockBalanceRow[];
+    expiryFilter?: StockExpiryFilter;
     canAdjust: boolean;
     onAdjust: (row: StockBalanceRow) => void;
     onFilteredCountChange?: (count: number) => void;
@@ -26,11 +31,22 @@ function formatMoney(value: string): string {
 
 export function StockBalancesTable({
     balances,
+    expiryFilter = 'all',
     canAdjust,
     onAdjust,
     onFilteredCountChange,
     toolbarEnd,
 }: Props) {
+    const filteredBalances = useMemo(
+        () => filterStockBalancesByExpiry(balances, expiryFilter),
+        [balances, expiryFilter],
+    );
+
+    const emptyFilteredMessage =
+        expiryFilter === 'all'
+            ? 'Ningún registro coincide con tu búsqueda.'
+            : 'Ningún producto coincide con este filtro de vencimiento.';
+
     const columns = useMemo<DataTableColumn<StockBalanceRow>[]>(
         () => [
             {
@@ -203,13 +219,13 @@ export function StockBalancesTable({
 
     return (
         <DataTable
-            data={balances}
+            data={filteredBalances}
             columns={columns}
             getRowKey={(row) => row.id}
             getSearchText={getSearchText}
             searchPlaceholder="Buscar producto o SKU…"
             emptyMessage="No hay saldos en este almacén. Registra un ajuste de stock."
-            emptyFilteredMessage="Ningún registro coincide con tu búsqueda."
+            emptyFilteredMessage={emptyFilteredMessage}
             renderActions={canAdjust ? renderActions : undefined}
             onFilteredCountChange={onFilteredCountChange}
             toolbarEnd={toolbarEnd}
