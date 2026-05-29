@@ -261,9 +261,15 @@ export default function StockBalancesIndex({
     );
 
     const tableToolbar = (
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end xl:w-auto">
-            {expiryFilterControl}
-            {warehouseFilter}
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-2 lg:shrink-0">
+            <div className="w-full sm:w-[min(100%,14rem)] lg:w-56">
+                {expiryFilterControl}
+            </div>
+            {warehouseFilter ? (
+                <div className="w-full sm:w-[min(100%,12rem)] lg:w-48">
+                    {warehouseFilter}
+                </div>
+            ) : null}
         </div>
     );
 

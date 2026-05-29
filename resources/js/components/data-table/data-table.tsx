@@ -176,7 +176,7 @@ export function DataTable<T>({
     }
 
     const toolbar = (
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-3">
             <DataTableSearch
                 value={serverSearch ? serverSearch.value : query}
                 onChange={serverSearch ? serverSearch.onChange : setQuery}
@@ -188,10 +188,10 @@ export function DataTable<T>({
                         : undefined
                 }
                 isSearching={isPending}
-                className="w-full max-w-none xl:min-w-0 xl:flex-1"
+                className="w-full min-w-0 md:max-w-md md:flex-1 lg:max-w-xl"
             />
             {toolbarEnd ? (
-                <div className="w-full shrink-0 xl:w-auto">{toolbarEnd}</div>
+                <div className="w-full shrink-0 md:w-auto">{toolbarEnd}</div>
             ) : null}
         </div>
     );
