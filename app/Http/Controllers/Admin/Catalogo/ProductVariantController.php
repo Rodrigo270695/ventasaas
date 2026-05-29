@@ -29,6 +29,8 @@ class ProductVariantController extends Controller
         $variant = $producto->variants()->create([
             ...$data,
             'minimum_stock' => $data['minimum_stock'] ?? 0,
+            'expires_at' => $data['expires_at'] ?? null,
+            'expiry_alert_days' => $data['expiry_alert_days'] ?? null,
             'is_default' => $isDefault,
             'is_active' => $data['is_active'] ?? true,
         ]);
@@ -59,6 +61,8 @@ class ProductVariantController extends Controller
         $variante->update([
             ...$data,
             'minimum_stock' => $data['minimum_stock'] ?? 0,
+            'expires_at' => $data['expires_at'] ?? null,
+            'expiry_alert_days' => $data['expiry_alert_days'] ?? null,
             'is_default' => $isDefault,
         ]);
 

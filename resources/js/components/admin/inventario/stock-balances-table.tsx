@@ -4,6 +4,7 @@ import { DataTable } from '@/components/data-table';
 import type { DataTableColumn } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { formatDecimalDisplay } from '@/lib/format-decimal';
+import { expiryStatusLabel, formatExpiryDate } from '@/lib/expiry-display';
 import { cn } from '@/lib/utils';
 import type { StockBalanceRow } from '@/types/admin/stock-balances';
 
@@ -81,6 +82,14 @@ export function StockBalancesTable({
                             <span className="mt-0.5 block text-[10px] font-semibold text-amber-700">
                                 Bajo mínimo
                             </span>
+                        ) : row.has_expiry_alert && row.is_expired ? (
+                            <span className="mt-0.5 block text-[10px] font-semibold text-rose-700">
+                                Vencido
+                            </span>
+                        ) : row.has_expiry_alert && row.is_expiring_soon ? (
+                            <span className="mt-0.5 block text-[10px] font-semibold text-orange-700">
+                                Por vencer
+                            </span>
                         ) : null}
                     </span>
                 ),
@@ -94,6 +103,56 @@ export function StockBalancesTable({
                 headerClassName: 'w-[7rem] text-right',
                 cellClassName: 'text-right whitespace-nowrap text-sm font-medium text-[#6b5b7a]',
                 cell: (row) => formatQty(row.minimum_stock),
+            },
+            {
+                id: 'expires_at',
+                header: 'Vencimiento',
+                mobileLabel: 'Vence',
+                sortable: true,
+                sortValue: (row) => row.expires_at ?? '',
+                headerClassName: 'w-[9rem] whitespace-nowrap',
+                cellClassName: 'whitespace-nowrap text-sm',
+                cell: (row) => {
+                    if (!row.expires_at) {
+                        return <span className="text-[#9ca3af]">—</span>;
+                    }
+
+                    const label = expiryStatusLabel(
+                        row.expires_at,
+                        row.is_expired,
+                        row.is_expiring_soon,
+                        row.days_until_expiry,
+                    );
+
+                    return (
+                        <span>
+                            <span
+                                className={cn(
+                                    'font-medium',
+                                    row.is_expired
+                                        ? 'text-rose-700'
+                                        : row.is_expiring_soon
+                                          ? 'text-amber-700'
+                                          : 'text-[#4c1d95]',
+                                )}
+                            >
+                                {formatExpiryDate(row.expires_at)}
+                            </span>
+                            {label ? (
+                                <span
+                                    className={cn(
+                                        'mt-0.5 block text-[10px] font-semibold',
+                                        row.is_expired
+                                            ? 'text-rose-700'
+                                            : 'text-amber-700',
+                                    )}
+                                >
+                                    {label}
+                                </span>
+                            ) : null}
+                        </span>
+                    );
+                },
             },
             {
                 id: 'avg_cost',
@@ -156,16 +215,12 @@ export function StockBalancesTable({
             toolbarEnd={toolbarEnd}
             getRowClassName={(row) =>
                 row.is_out_of_stock
-                    ? cn(
-                          'bg-rose-50/70',
-                          'hover:!bg-rose-100/80',
-                      )
-                    : row.is_low_stock
-                      ? cn(
-                            'bg-amber-50/70',
-                            'hover:!bg-amber-100/80',
-                        )
-                      : undefined
+                    ? cn('bg-rose-50/70', 'hover:!bg-rose-100/80')
+                    : row.has_expiry_alert && row.is_expired
+                      ? cn('bg-rose-50/50', 'hover:!bg-rose-100/70')
+                      : row.is_low_stock || (row.has_expiry_alert && row.is_expiring_soon)
+                        ? cn('bg-amber-50/70', 'hover:!bg-amber-100/80')
+                        : undefined
             }
             className="min-w-0 [&_table]:table-fixed"
         />

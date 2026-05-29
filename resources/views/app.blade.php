@@ -39,6 +39,7 @@
         <meta name="theme-color" content="#7c3aed">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="description" content="{{ config('seo.default_description') }}">
 
         @fonts
 

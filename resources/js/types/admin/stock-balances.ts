@@ -21,9 +21,16 @@ export type StockBalanceRow = {
     stock_value: string;
     is_low_stock: boolean;
     is_out_of_stock: boolean;
+    expires_at: string | null;
+    expiry_alert_days: number | null;
+    is_expired: boolean;
+    is_expiring_soon: boolean;
+    days_until_expiry: number | null;
+    expiry_level: 'critical' | 'warning' | null;
+    has_expiry_alert: boolean;
 };
 
-export type StockBalanceStatKey = 'skus' | 'with_stock' | 'zero' | 'low' | 'value';
+export type StockBalanceStatKey = 'skus' | 'with_stock' | 'zero' | 'low' | 'expiry' | 'value';
 
 export type StockBalanceStatItem = StatBadgeItem & {
     key: StockBalanceStatKey;

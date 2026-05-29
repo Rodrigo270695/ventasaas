@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useAutoCodeFromName } from '@/hooks/use-auto-code-from-name';
 import { sanitizeSku } from '@/lib/catalog-code';
+import { expiryStatusLabel, formatExpiryDate } from '@/lib/expiry-display';
 import { cn } from '@/lib/utils';
 import type { ProductVariantRow } from '@/types/admin/products';
 
@@ -82,6 +83,10 @@ function VariantEditForm({
     const [minimumStock, setMinimumStock] = useState(
         toTwoDecimals(variant.minimum_stock ?? '0'),
     );
+    const [expiresAt, setExpiresAt] = useState(variant.expires_at ?? '');
+    const [expiryAlertDays, setExpiryAlertDays] = useState(
+        variant.expiry_alert_days?.toString() ?? '',
+    );
     const [isDefault, setIsDefault] = useState(variant.is_default);
     const [isActive, setIsActive] = useState(variant.is_active);
     const [processing, setProcessing] = useState(false);
@@ -95,6 +100,8 @@ function VariantEditForm({
                 label: label || null,
                 barcode: barcode || null,
                 minimum_stock: minimumStock || 0,
+                expires_at: expiresAt || null,
+                expiry_alert_days: expiryAlertDays || null,
                 is_default: isDefault,
                 is_active: isActive,
             },
@@ -157,6 +164,31 @@ function VariantEditForm({
                         placeholder="0"
                         error={errors.minimum_stock}
                         disabled={processing}
+                    />
+                    <FormTextField
+                        id={`variant-edit-expires-at-${variant.id}`}
+                        name="expires_at"
+                        label="Fecha de vencimiento"
+                        type="date"
+                        value={expiresAt}
+                        onChange={setExpiresAt}
+                        error={errors.expires_at}
+                        disabled={processing}
+                        hint="Opcional. Para alertas de caducidad."
+                    />
+                    <FormTextField
+                        id={`variant-edit-expiry-alert-days-${variant.id}`}
+                        name="expiry_alert_days"
+                        label="Alertar días antes"
+                        type="number"
+                        value={expiryAlertDays}
+                        onChange={setExpiryAlertDays}
+                        min={0}
+                        max={365}
+                        placeholder="14"
+                        error={errors.expiry_alert_days}
+                        disabled={processing}
+                        hint="Vacío = 14 días (global)."
                     />
                 </div>
                 <div className="flex flex-wrap gap-4">
@@ -230,6 +262,8 @@ export function ProductVariantsPanel({
     const [newLabel, setNewLabel] = useState('');
     const [newBarcode, setNewBarcode] = useState('');
     const [newMinimumStock, setNewMinimumStock] = useState('0.00');
+    const [newExpiresAt, setNewExpiresAt] = useState('');
+    const [newExpiryAlertDays, setNewExpiryAlertDays] = useState('');
 
     useEffect(() => {
         if (editingId && !variants.some((variant) => variant.id === editingId)) {
@@ -257,6 +291,8 @@ export function ProductVariantsPanel({
                 label: newLabel || null,
                 barcode: newBarcode || null,
                 minimum_stock: newMinimumStock || 0,
+                expires_at: newExpiresAt || null,
+                expiry_alert_days: newExpiryAlertDays || null,
                 is_active: true,
             },
             {
@@ -267,6 +303,8 @@ export function ProductVariantsPanel({
                     setNewLabel('');
                     setNewBarcode('');
                     setNewMinimumStock('0');
+                    setNewExpiresAt('');
+                    setNewExpiryAlertDays('');
                 },
                 onFinish: () => setAdding(false),
             },
@@ -333,6 +371,33 @@ export function ProductVariantsPanel({
                                     <p className="mt-0.5 text-[11px] font-medium text-amber-700">
                                         Stock mínimo: {variant.minimum_stock}
                                     </p>
+                                    {variant.expires_at ? (
+                                        <p
+                                            className={cn(
+                                                'mt-0.5 text-[11px] font-medium',
+                                                variant.is_expired
+                                                    ? 'text-rose-700'
+                                                    : variant.is_expiring_soon
+                                                      ? 'text-amber-700'
+                                                      : 'text-[#6b5b7a]',
+                                            )}
+                                        >
+                                            Vence: {formatExpiryDate(variant.expires_at)}
+                                            {expiryStatusLabel(
+                                                variant.expires_at,
+                                                variant.is_expired,
+                                                variant.is_expiring_soon,
+                                                variant.days_until_expiry,
+                                            )
+                                                ? ` · ${expiryStatusLabel(
+                                                      variant.expires_at,
+                                                      variant.is_expired,
+                                                      variant.is_expiring_soon,
+                                                      variant.days_until_expiry,
+                                                  )}`
+                                                : ''}
+                                        </p>
+                                    ) : null}
                                     <div className="mt-1.5">
                                         <VariantBadges
                                             isDefault={variant.is_default}
@@ -453,6 +518,29 @@ export function ProductVariantsPanel({
                                         min={0}
                                         placeholder="0"
                                         error={errors.minimum_stock}
+                                        disabled={adding}
+                                    />
+                                    <FormTextField
+                                        id="variant-new-expires-at"
+                                        name="expires_at"
+                                        label="Fecha de vencimiento"
+                                        type="date"
+                                        value={newExpiresAt}
+                                        onChange={setNewExpiresAt}
+                                        error={errors.expires_at}
+                                        disabled={adding}
+                                    />
+                                    <FormTextField
+                                        id="variant-new-expiry-alert-days"
+                                        name="expiry_alert_days"
+                                        label="Alertar días antes"
+                                        type="number"
+                                        value={newExpiryAlertDays}
+                                        onChange={setNewExpiryAlertDays}
+                                        min={0}
+                                        max={365}
+                                        placeholder="14"
+                                        error={errors.expiry_alert_days}
                                         disabled={adding}
                                     />
                                 </div>

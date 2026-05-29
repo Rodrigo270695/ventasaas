@@ -6,10 +6,11 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductPrice;
 use App\Models\ProductVariant;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
-test('welcome page shows public catalog', function () {
+test('welcome page exposes seo metadata for public catalog', function () {
     $category = ProductCategory::factory()->create(['name' => 'Cereales']);
     $priceList = PriceList::factory()->create(['is_default' => true, 'is_active' => true]);
     $product = Product::factory()->create([
@@ -33,12 +34,18 @@ test('welcome page shows public catalog', function () {
     CfgStoreSetting::factory()->create([
         'whatsapp_number' => '51999888777',
         'razon_social' => 'Choko House SAC',
+        'direccion' => 'Av. Principal 123, Lima',
     ]);
 
     $this->get(route('home'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('welcome')
+            ->has('seo')
+            ->where('seo.title', fn ($title) => str_contains($title, 'Choko House SAC'))
+            ->where('seo.robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
+            ->where('seo.canonical', url('/'))
+            ->has('seo.json_ld', 4)
             ->has('heroSlides', 0)
             ->has('products', 1)
             ->where('products.0.name', 'Chifles acevichados')
@@ -54,5 +61,6 @@ test('welcome page excludes products without price', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('welcome')
+            ->has('seo')
             ->has('products', 0));
 });

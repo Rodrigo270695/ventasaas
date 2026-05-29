@@ -35,11 +35,14 @@ export type WelcomeHeroSlide = {
     image_url: string;
 };
 
+import type { SeoMeta } from '@/types/seo';
+
 export type WelcomePageProps = {
     store: WelcomeStore;
     heroSlides: WelcomeHeroSlide[];
     categories: CatalogCategory[];
     products: CatalogProduct[];
+    seo: SeoMeta;
 };
 
 export type CartLine = {

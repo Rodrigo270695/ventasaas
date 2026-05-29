@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariant;
 use App\Models\StoreCoverSlide;
+use App\Support\SeoMetaBuilder;
 use App\Support\StoreCoverStorage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,6 +18,7 @@ class WelcomeController extends Controller
 {
     public function __construct(
         private readonly StoreCoverStorage $covers,
+        private readonly SeoMetaBuilder $seo,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -100,6 +102,12 @@ class WelcomeController extends Controller
             'heroSlides' => $heroSlides,
             'categories' => $categories,
             'products' => $catalogProducts->values()->all(),
+            'seo' => $this->seo->forWelcome(
+                $store,
+                $catalogProducts->values()->all(),
+                $heroSlides,
+                $categories,
+            ),
         ]);
     }
 

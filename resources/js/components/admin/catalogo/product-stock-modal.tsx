@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDecimalDisplay } from '@/lib/format-decimal';
+import { expiryStatusLabel, formatExpiryDate } from '@/lib/expiry-display';
 import {
     chokoSelectContentClass,
     chokoSelectItemClass,
@@ -252,9 +253,12 @@ export function ProductStockModal({
                                                         'border-b border-violet-50 last:border-b-0',
                                                         variant.is_out_of_stock
                                                             ? 'bg-rose-50/60'
-                                                            : variant.is_low_stock
-                                                              ? 'bg-amber-50/60'
-                                                              : undefined,
+                                                            : variant.is_expired
+                                                              ? 'bg-rose-50/40'
+                                                              : variant.is_low_stock ||
+                                                                  variant.is_expiring_soon
+                                                                ? 'bg-amber-50/60'
+                                                                : undefined,
                                                     )}
                                                 >
                                                     <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[#7c6f8a]">
@@ -279,6 +283,19 @@ export function ProductStockModal({
                                                         ) : variant.is_low_stock ? (
                                                             <span className="mt-0.5 block text-[10px] font-semibold text-amber-700">
                                                                 Bajo mínimo
+                                                            </span>
+                                                        ) : variant.is_expired ? (
+                                                            <span className="mt-0.5 block text-[10px] font-semibold text-rose-700">
+                                                                Vencido
+                                                            </span>
+                                                        ) : variant.is_expiring_soon ? (
+                                                            <span className="mt-0.5 block text-[10px] font-semibold text-orange-700">
+                                                                {expiryStatusLabel(
+                                                                    variant.expires_at,
+                                                                    variant.is_expired,
+                                                                    variant.is_expiring_soon,
+                                                                    variant.days_until_expiry,
+                                                                )}
                                                             </span>
                                                         ) : null}
                                                     </td>

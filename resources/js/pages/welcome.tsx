@@ -1,5 +1,6 @@
-import { Head, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { useCallback } from 'react';
+import { SeoHead } from '@/components/seo/seo-head';
 import { CatalogCartPanel } from '@/components/welcome/catalog-cart-panel';
 import { WelcomeBackgroundDecor } from '@/components/welcome/welcome-background-decor';
 import { WelcomeCatalogSection } from '@/components/welcome/welcome-catalog-section';
@@ -18,6 +19,7 @@ export default function Welcome({
     heroSlides,
     categories,
     products,
+    seo,
 }: WelcomePageProps) {
     const { company } = usePage().props;
     const branding = company as CompanyBranding;
@@ -45,7 +47,7 @@ export default function Welcome({
 
     return (
         <>
-            <Head title={displayName} />
+            <SeoHead seo={seo} />
 
             <div className="relative min-h-screen overflow-x-hidden bg-[#fff5f8] text-[#831843]">
                 <WelcomeBackgroundDecor />

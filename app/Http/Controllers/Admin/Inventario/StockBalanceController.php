@@ -9,6 +9,7 @@ use App\Models\StockBalance;
 use App\Models\VariantPackagingConversion;
 use App\Models\Warehouse;
 use App\Services\Catalog\ProductPriceFromCostService;
+use App\Support\VariantExpiryStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -49,7 +50,7 @@ class StockBalanceController extends Controller
 
         $balancesQuery = StockBalance::query()
             ->with([
-                'variant:id,product_id,sku,label,minimum_stock',
+                'variant:id,product_id,sku,label,minimum_stock,expires_at,expiry_alert_days',
                 'variant.product:id,name,track_stock,type',
                 'warehouse:id,code,name',
             ])
@@ -98,6 +99,12 @@ class StockBalanceController extends Controller
             $minimumStock = (string) ($balance->variant?->minimum_stock ?? '0');
             $isOutOfStock = bccomp($qty, '0', 4) <= 0;
             $isLowStock = ! $isOutOfStock && bccomp($minimumStock, '0', 4) === 1 && bccomp($qty, $minimumStock, 4) <= 0;
+            $expiry = VariantExpiryStatus::toPayload(
+                $balance->variant?->expires_at,
+                $balance->variant?->expiry_alert_days,
+            );
+            $hasExpiryAlert = bccomp($qty, '0', 4) === 1
+                && ($expiry['is_expired'] || $expiry['is_expiring_soon']);
 
             return [
                 'id' => $balance->id,
@@ -115,11 +122,14 @@ class StockBalanceController extends Controller
                 'stock_value' => $value,
                 'is_low_stock' => $isLowStock,
                 'is_out_of_stock' => $isOutOfStock,
+                ...$expiry,
+                'has_expiry_alert' => $hasExpiryAlert,
             ];
         });
 
         $withStock = $rows->filter(fn (array $row) => (float) $row['quantity_on_hand'] > 0)->count();
         $lowStock = $rows->filter(fn (array $row) => $row['is_low_stock'] || $row['is_out_of_stock'])->count();
+        $expiring = $rows->filter(fn (array $row) => $row['has_expiry_alert'])->count();
         $totalValue = $rows->reduce(
             fn (string $carry, array $row) => bcadd($carry, $row['stock_value'], 2),
             '0',
@@ -177,6 +187,12 @@ class StockBalanceController extends Controller
                     'label' => 'Bajo mínimo',
                     'value' => $lowStock,
                     'tone' => 'pink',
+                ],
+                [
+                    'key' => 'expiry',
+                    'label' => 'Por vencer',
+                    'value' => $expiring,
+                    'tone' => 'amber',
                 ],
                 [
                     'key' => 'value',

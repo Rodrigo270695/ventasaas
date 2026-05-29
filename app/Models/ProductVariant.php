@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductVariant extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProductVariantFactory> */
+    /** @use HasFactory<ProductVariantFactory> */
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [
@@ -20,6 +22,8 @@ class ProductVariant extends Model
         'label',
         'barcode',
         'minimum_stock',
+        'expires_at',
+        'expiry_alert_days',
         'is_default',
         'is_active',
         'attributes',
@@ -34,6 +38,8 @@ class ProductVariant extends Model
             'is_default' => 'boolean',
             'is_active' => 'boolean',
             'minimum_stock' => 'decimal:4',
+            'expires_at' => 'date',
+            'expiry_alert_days' => 'integer',
             'attributes' => 'array',
         ];
     }
@@ -55,9 +61,9 @@ class ProductVariant extends Model
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne<ProductTaxProfile, $this>
+     * @return HasOne<ProductTaxProfile, $this>
      */
-    public function taxProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function taxProfile(): HasOne
     {
         return $this->hasOne(ProductTaxProfile::class);
     }

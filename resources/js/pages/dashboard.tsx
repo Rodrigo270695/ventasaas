@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    CalendarClock,
     Banknote,
     Candy,
     Package,
@@ -68,6 +69,16 @@ type DashboardProps = {
         minimum: number;
         level: 'critical' | 'warning';
     }>;
+    expiryAlerts: Array<{
+        variant_id: string;
+        sku: string | null;
+        product: string;
+        warehouse: string | null;
+        stock: number;
+        expires_at: string | null;
+        days_until_expiry: number | null;
+        level: 'critical' | 'warning';
+    }>;
     monthlyPerformance: Array<{
         month: string;
         amount: number;
@@ -108,6 +119,7 @@ export default function Dashboard({
     categoryShare,
     topProducts,
     lowStockAlerts,
+    expiryAlerts,
     monthlyPerformance,
     salesByDocumentType,
     filters,
@@ -469,30 +481,95 @@ export default function Dashboard({
                 </div>
 
                 <div className="grid gap-4 xl:grid-cols-3">
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm xl:col-span-2">
-                        <div className="mb-3 flex items-center gap-2">
-                            <AlertTriangle className="size-4 text-amber-700" />
-                            <h2 className="text-sm font-bold text-amber-800">Alertas de stock mínimo</h2>
+                    <div className="grid gap-4 md:grid-cols-2 xl:col-span-2">
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm">
+                            <div className="mb-3 flex items-center gap-2">
+                                <AlertTriangle className="size-4 text-amber-700" />
+                                <h2 className="text-sm font-bold text-amber-800">
+                                    Alertas de stock mínimo
+                                </h2>
+                            </div>
+                            <div className="space-y-2">
+                                {lowStockAlerts.length === 0 ? (
+                                    <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                        Todo en orden. No hay alertas de stock mínimo.
+                                    </p>
+                                ) : (
+                                    lowStockAlerts.map((item) => (
+                                        <div
+                                            key={item.variant_id}
+                                            className="rounded-xl border border-amber-200 bg-white px-3 py-2"
+                                        >
+                                            <p className="font-medium text-[#3b2d4a]">
+                                                {item.product}
+                                            </p>
+                                            <p className="text-xs text-[#7c6f8a]">
+                                                {item.sku ?? 'SKU —'} · Stock:{' '}
+                                                <span
+                                                    className={
+                                                        item.level === 'critical'
+                                                            ? 'font-semibold text-rose-700'
+                                                            : 'font-semibold text-amber-700'
+                                                    }
+                                                >
+                                                    {item.stock.toFixed(2)}
+                                                </span>{' '}
+                                                · Min: {item.minimum.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            {lowStockAlerts.length === 0 ? (
-                                <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                                    Todo en orden. No hay alertas de stock mínimo.
-                                </p>
-                            ) : (
-                                lowStockAlerts.map((item) => (
-                                    <div key={item.variant_id} className="rounded-xl border border-amber-200 bg-white px-3 py-2">
-                                        <p className="font-medium text-[#3b2d4a]">{item.product}</p>
-                                        <p className="text-xs text-[#7c6f8a]">
-                                            {item.sku ?? 'SKU —'} · Stock:{' '}
-                                            <span className={item.level === 'critical' ? 'font-semibold text-rose-700' : 'font-semibold text-amber-700'}>
-                                                {item.stock.toFixed(2)}
-                                            </span>{' '}
-                                            · Min: {item.minimum.toFixed(2)}
-                                        </p>
-                                    </div>
-                                ))
-                            )}
+
+                        <div className="rounded-2xl border border-orange-200 bg-orange-50/50 p-4 shadow-sm">
+                            <div className="mb-3 flex items-center gap-2">
+                                <CalendarClock className="size-4 text-orange-700" />
+                                <h2 className="text-sm font-bold text-orange-800">
+                                    Productos por vencer
+                                </h2>
+                            </div>
+                            <div className="space-y-2">
+                                {expiryAlerts.length === 0 ? (
+                                    <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                                        No hay productos próximos a vencer con stock.
+                                    </p>
+                                ) : (
+                                    expiryAlerts.map((item) => (
+                                        <div
+                                            key={`${item.variant_id}-${item.warehouse ?? 'all'}`}
+                                            className="rounded-xl border border-orange-200 bg-white px-3 py-2"
+                                        >
+                                            <p className="font-medium text-[#3b2d4a]">
+                                                {item.product}
+                                            </p>
+                                            <p className="text-xs text-[#7c6f8a]">
+                                                {item.sku ?? 'SKU —'}
+                                                {item.warehouse
+                                                    ? ` · ${item.warehouse}`
+                                                    : ''}{' '}
+                                                · Stock: {item.stock.toFixed(2)} ·{' '}
+                                                <span
+                                                    className={
+                                                        item.level === 'critical'
+                                                            ? 'font-semibold text-rose-700'
+                                                            : 'font-semibold text-orange-700'
+                                                    }
+                                                >
+                                                    {item.level === 'critical'
+                                                        ? 'Vencido'
+                                                        : item.days_until_expiry === 0
+                                                          ? 'Vence hoy'
+                                                          : `Vence en ${item.days_until_expiry} día${item.days_until_expiry === 1 ? '' : 's'}`}
+                                                </span>
+                                                {item.expires_at
+                                                    ? ` (${item.expires_at})`
+                                                    : ''}
+                                            </p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                     <div className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">

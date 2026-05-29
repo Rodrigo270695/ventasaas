@@ -10,6 +10,7 @@ use App\Models\SalesQuotation;
 use App\Models\StockBalance;
 use App\Models\TreasuryPayment;
 use App\Models\Warehouse;
+use App\Support\VariantExpiryStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -264,6 +265,51 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        $expiryAlerts = StockBalance::query()
+            ->with([
+                'variant:id,product_id,sku,label,expires_at,expiry_alert_days',
+                'variant.product:id,name,track_stock,type',
+                'warehouse:id,name',
+            ])
+            ->where('quantity_on_hand', '>', 0)
+            ->whereHas('variant', fn ($query) => $query->whereNotNull('expires_at'))
+            ->whereHas('variant.product', fn ($query) => $query
+                ->where('track_stock', true)
+                ->where('type', Product::TYPE_GOOD))
+            ->when($warehouseId, fn ($query, $value) => $query->where('warehouse_id', $value))
+            ->get()
+            ->filter(function (StockBalance $balance) {
+                $status = VariantExpiryStatus::evaluate(
+                    $balance->variant?->expires_at,
+                    $balance->variant?->expiry_alert_days,
+                    $today,
+                );
+
+                return $status['level'] !== null;
+            })
+            ->sortBy(fn (StockBalance $balance) => $balance->variant?->expires_at)
+            ->take(8)
+            ->values()
+            ->map(function (StockBalance $balance) use ($today) {
+                $status = VariantExpiryStatus::evaluate(
+                    $balance->variant?->expires_at,
+                    $balance->variant?->expiry_alert_days,
+                    $today,
+                );
+
+                return [
+                    'variant_id' => $balance->product_variant_id,
+                    'sku' => $balance->variant?->sku,
+                    'product' => trim(($balance->variant?->product?->name ?? 'Producto').' '.($balance->variant?->label ? '· '.$balance->variant?->label : '')),
+                    'warehouse' => $balance->warehouse?->name,
+                    'stock' => round((float) $balance->quantity_on_hand, 2),
+                    'expires_at' => VariantExpiryStatus::formatExpiresAt($balance->variant?->expires_at),
+                    'days_until_expiry' => $status['days_until_expiry'],
+                    'level' => $status['level'],
+                ];
+            })
+            ->all();
+
         $warehouseOptions = Warehouse::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -303,6 +349,7 @@ class DashboardController extends Controller
             'monthlyPerformance' => $monthlyPerformance,
             'salesByDocumentType' => $salesByDocumentType,
             'lowStockAlerts' => $lowStockAlerts,
+            'expiryAlerts' => $expiryAlerts,
             'filters' => [
                 'period' => $period,
                 'warehouse_id' => $warehouseId,
@@ -311,4 +358,3 @@ class DashboardController extends Controller
         ]);
     }
 }
-

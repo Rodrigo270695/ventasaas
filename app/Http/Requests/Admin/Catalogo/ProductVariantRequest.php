@@ -43,6 +43,8 @@ class ProductVariantRequest extends FormRequest
             'label' => ['nullable', 'string', 'max:120'],
             'barcode' => ['nullable', 'string', 'max:50'],
             'minimum_stock' => ['nullable', 'numeric', 'min:0'],
+            'expires_at' => ['nullable', 'date'],
+            'expiry_alert_days' => ['nullable', 'integer', 'min:0', 'max:365'],
             'is_default' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
         ];
@@ -58,6 +60,8 @@ class ProductVariantRequest extends FormRequest
             'label' => 'presentación',
             'barcode' => 'código de barras',
             'minimum_stock' => 'stock mínimo',
+            'expires_at' => 'fecha de vencimiento',
+            'expiry_alert_days' => 'días de alerta antes del vencimiento',
             'is_default' => 'variante predeterminada',
             'is_active' => 'estado',
         ];
@@ -87,6 +91,20 @@ class ProductVariantRequest extends FormRequest
             $raw = trim((string) $this->input('minimum_stock'));
             $this->merge([
                 'minimum_stock' => $raw === '' ? null : str_replace(',', '.', $raw),
+            ]);
+        }
+
+        if ($this->has('expires_at')) {
+            $raw = trim((string) $this->input('expires_at'));
+            $this->merge([
+                'expires_at' => $raw === '' ? null : $raw,
+            ]);
+        }
+
+        if ($this->has('expiry_alert_days')) {
+            $raw = trim((string) $this->input('expiry_alert_days'));
+            $this->merge([
+                'expiry_alert_days' => $raw === '' ? null : (int) $raw,
             ]);
         }
     }

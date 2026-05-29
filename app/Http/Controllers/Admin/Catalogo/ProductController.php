@@ -13,10 +13,11 @@ use App\Models\ProductTaxProfile;
 use App\Models\ProductVariant;
 use App\Models\StockBalance;
 use App\Models\TaxProfile;
-use App\Models\VariantPackagingConversion;
 use App\Models\Unit;
+use App\Models\VariantPackagingConversion;
 use App\Models\Warehouse;
 use App\Support\Toast;
+use App\Support\VariantExpiryStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -231,7 +232,7 @@ class ProductController extends Controller
             ])
             ->orderByDesc('is_default')
             ->orderBy('sku')
-            ->get(['id', 'sku', 'label', 'minimum_stock', 'is_default']);
+            ->get(['id', 'sku', 'label', 'minimum_stock', 'expires_at', 'expiry_alert_days', 'is_default']);
 
         $rows = $variants->map(function (ProductVariant $variant) {
             $balance = $variant->stockBalances->first();
@@ -255,6 +256,7 @@ class ProductController extends Controller
                 'stock_value' => $value,
                 'is_low_stock' => $isLowStock,
                 'is_out_of_stock' => $isOutOfStock,
+                ...VariantExpiryStatus::toPayload($variant->expires_at, $variant->expiry_alert_days),
             ];
         });
 
@@ -352,6 +354,7 @@ class ProductController extends Controller
                 'label' => $variant->label,
                 'barcode' => $variant->barcode,
                 'minimum_stock' => number_format((float) $variant->minimum_stock, 2, '.', ''),
+                ...VariantExpiryStatus::toPayload($variant->expires_at, $variant->expiry_alert_days),
                 'is_default' => $variant->is_default,
                 'is_active' => $variant->is_active,
                 'prices' => $variant->prices->map(fn (ProductPrice $price) => [

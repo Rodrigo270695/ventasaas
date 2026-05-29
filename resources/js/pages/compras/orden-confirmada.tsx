@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { CheckCircle2, XCircle } from 'lucide-react';
+import { NoIndexHead } from '@/components/seo/no-index-head';
 
 type Props = {
     success: boolean;
@@ -20,6 +21,7 @@ export default function PurchaseOrderConfirmedPage({
 }: Props) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-violet-50 via-white to-pink-50 p-6">
+            <NoIndexHead />
             <Head
                 title={
                     success

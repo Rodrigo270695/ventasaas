@@ -34,6 +34,12 @@ export type ProductVariantRow = {
     label: string | null;
     barcode: string | null;
     minimum_stock: string;
+    expires_at: string | null;
+    expiry_alert_days: number | null;
+    is_expired: boolean;
+    is_expiring_soon: boolean;
+    days_until_expiry: number | null;
+    expiry_level: 'critical' | 'warning' | null;
     is_default: boolean;
     is_active: boolean;
     prices: ProductVariantPriceRow[];
@@ -71,6 +77,12 @@ export type ProductStockSummaryRow = {
     stock_value: string;
     is_low_stock: boolean;
     is_out_of_stock: boolean;
+    expires_at: string | null;
+    expiry_alert_days: number | null;
+    is_expired: boolean;
+    is_expiring_soon: boolean;
+    days_until_expiry: number | null;
+    expiry_level: 'critical' | 'warning' | null;
 };
 
 export type ProductStockSummaryResponse = {
