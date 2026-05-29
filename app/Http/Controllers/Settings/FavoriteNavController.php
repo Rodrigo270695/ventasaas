@@ -18,6 +18,7 @@ class FavoriteNavController extends Controller
             '/admin/catalogo/productos' => 'products.view',
             '/admin/catalogo/categorias' => 'categories.view',
             '/admin/ventas/comprobantes' => 'sales.view',
+            '/admin/ventas/tickets-internos' => 'sales.internal.view',
             '/admin/ventas/cotizaciones' => 'sales.quotations.view',
             '/admin/compras/facturas' => 'purchases.view',
             '/admin/inventario/saldos' => 'stock_balances.view',

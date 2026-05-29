@@ -12,6 +12,7 @@ import {
     Users,
     Wallet,
     Warehouse,
+    Zap,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { NavCollapsibleGroup } from '@/components/nav-collapsible-group';
@@ -37,6 +38,7 @@ import {
     PRODUCTS_PERMISSIONS,
     PURCHASES_PERMISSIONS,
     ROLES_PERMISSIONS,
+    SALES_INTERNAL_PERMISSIONS,
     SALES_PERMISSIONS,
     SALES_QUOTATIONS_PERMISSIONS,
     STOCK_BALANCES_PERMISSIONS,
@@ -111,6 +113,12 @@ export function NavMain({
                     href: '/admin/ventas/comprobantes',
                     icon: FileText,
                     allowed: can(SALES_PERMISSIONS.VIEW),
+                },
+                {
+                    title: 'Venta rápida',
+                    href: '/admin/ventas/tickets-internos',
+                    icon: Zap,
+                    allowed: can(SALES_INTERNAL_PERMISSIONS.VIEW),
                 },
                 {
                     title: 'Cotizaciones',
