@@ -66,10 +66,10 @@ export function CatalogProductVisual({ product, className }: Props) {
             />
 
             <div
-                className="relative flex size-24 items-center justify-center rounded-[1.75rem] border-4 border-white bg-white/90 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.25)] sm:size-28"
+                className="relative flex size-20 items-center justify-center rounded-2xl border-2 border-white/80 bg-white/90 shadow-sm sm:size-24"
                 style={{ color: palette.accent }}
             >
-                <span className="text-3xl font-black tracking-tight sm:text-4xl">
+                <span className="text-2xl font-black tracking-tight sm:text-3xl">
                     {initials(product.name)}
                 </span>
             </div>

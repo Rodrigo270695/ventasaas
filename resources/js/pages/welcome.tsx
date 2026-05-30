@@ -1,13 +1,18 @@
 import { usePage } from '@inertiajs/react';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { SeoHead } from '@/components/seo/seo-head';
 import { CatalogCartPanel } from '@/components/welcome/catalog-cart-panel';
+import { WelcomeAnnouncementBar } from '@/components/welcome/welcome-announcement-bar';
 import { WelcomeBackgroundDecor } from '@/components/welcome/welcome-background-decor';
-import { WelcomeCatalogSection } from '@/components/welcome/welcome-catalog-section';
+import {
+    ALL_CATEGORIES,
+    WelcomeCatalogSection,
+} from '@/components/welcome/welcome-catalog-section';
+import { WelcomeCategoryNav } from '@/components/welcome/welcome-category-nav';
 import { WelcomeFeaturesSection } from '@/components/welcome/welcome-features-section';
 import { WelcomeFooter } from '@/components/welcome/welcome-footer';
 import { WelcomeHeroCarousel } from '@/components/welcome/welcome-hero-carousel';
-import { WelcomeMobileCartFab } from '@/components/welcome/welcome-mobile-cart-fab';
+import { WelcomeMobileBottomNav } from '@/components/welcome/welcome-mobile-bottom-nav';
 import { WelcomeNavbar } from '@/components/welcome/welcome-navbar';
 import { useCatalogCart } from '@/hooks/use-catalog-cart';
 import { buildWhatsappCheckoutUrl } from '@/lib/whatsapp-order';
@@ -24,6 +29,10 @@ export default function Welcome({
     const { company } = usePage().props;
     const branding = company as CompanyBranding;
     const displayName = store.name ?? branding.name;
+
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryId, setCategoryId] = useState(ALL_CATEGORIES);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const cart = useCatalogCart(
         store.whatsapp_number,
@@ -49,15 +58,30 @@ export default function Welcome({
         <>
             <SeoHead seo={seo} />
 
-            <div className="relative min-h-screen overflow-x-hidden bg-[#fff5f8] text-[#831843]">
+            <div className="relative min-h-screen bg-[#fffbf5] text-[#1f2937]">
                 <WelcomeBackgroundDecor />
 
-                <WelcomeNavbar
-                    cartItemCount={cart.itemCount}
-                    whatsappUrl={whatsappContactUrl}
-                    onOpenCart={() => cart.setCartOpen(true)}
-                    onScrollToCatalog={scrollToCatalog}
-                />
+                <WelcomeAnnouncementBar storeName={displayName} />
+
+                <div className="md:sticky md:top-0 md:z-50 md:bg-white md:shadow-sm">
+                    <WelcomeNavbar
+                        cartItemCount={cart.itemCount}
+                        whatsappUrl={whatsappContactUrl}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        onOpenCart={() => cart.setCartOpen(true)}
+                        onScrollToCatalog={scrollToCatalog}
+                        mobileMenuOpen={mobileMenuOpen}
+                        onMobileMenuOpenChange={setMobileMenuOpen}
+                    />
+
+                    <WelcomeCategoryNav
+                        categories={categories}
+                        activeCategoryId={categoryId}
+                        onSelectCategory={setCategoryId}
+                        onScrollToCatalog={scrollToCatalog}
+                    />
+                </div>
 
                 <WelcomeHeroCarousel
                     slides={heroSlides}
@@ -68,10 +92,13 @@ export default function Welcome({
                     onOpenCart={() => cart.setCartOpen(true)}
                 />
 
-                <main className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
+                <main className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
                     <WelcomeCatalogSection
                         products={products}
                         categories={categories}
+                        query={searchQuery}
+                        categoryId={categoryId}
+                        onCategoryChange={setCategoryId}
                         onAddToCart={cart.addProduct}
                     />
 
@@ -86,9 +113,12 @@ export default function Welcome({
                     onScrollToCatalog={scrollToCatalog}
                 />
 
-                <WelcomeMobileCartFab
-                    itemCount={cart.itemCount}
+                <WelcomeMobileBottomNav
+                    cartItemCount={cart.itemCount}
+                    whatsappUrl={whatsappContactUrl}
                     onOpenCart={() => cart.setCartOpen(true)}
+                    onScrollToCatalog={scrollToCatalog}
+                    onOpenMenu={() => setMobileMenuOpen(true)}
                 />
 
                 <CatalogCartPanel

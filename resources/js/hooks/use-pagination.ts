@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-export const PAGE_SIZE_OPTIONS = [10, 15, 20, 25, 50, 100] as const;
+export const PAGE_SIZE_OPTIONS = [10, 15, 20, 25, 30, 50, 100] as const;
 
 export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number];
 

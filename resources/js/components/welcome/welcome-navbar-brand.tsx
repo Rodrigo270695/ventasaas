@@ -8,26 +8,26 @@ export function WelcomeNavbarBrand() {
     return (
         <Link
             href="/"
-            className="inline-flex max-w-[11rem] items-center rounded-2xl bg-white/95 px-3 py-1.5 shadow-[0_8px_22px_-10px_rgba(0,0,0,0.45)] ring-1 ring-white/70 transition hover:bg-white sm:max-w-[9.5rem]"
+            className="inline-flex max-w-[10rem] shrink-0 items-center gap-2 transition sm:max-w-[11rem]"
         >
             {company.logo_url ? (
                 <img
                     src={encodeURI(company.logo_url)}
                     alt={company.name}
-                    className="h-8 w-full object-contain object-left"
+                    className="h-8 w-full object-contain object-left sm:h-9"
                 />
             ) : (
-                <span className="flex items-center gap-2">
+                <>
                     <span
-                        className="flex size-7 shrink-0 items-center justify-center"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-[#fff7ed]"
                         style={{ color: company.primary_color }}
                     >
-                        <AppLogoIcon className="size-7 object-contain" />
+                        <AppLogoIcon className="size-5 object-contain" />
                     </span>
-                    <span className="truncate text-sm font-extrabold text-[#7c3aed]">
+                    <span className="truncate text-base font-extrabold text-[#1f2937]">
                         {company.name}
                     </span>
-                </span>
+                </>
             )}
         </Link>
     );

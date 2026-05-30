@@ -40,12 +40,22 @@ export function useCatalogCart(
     whatsappNumber: string | null,
     storeName?: string | null,
 ) {
-    const [lines, setLines] = useState<CartLine[]>(() => readStoredCart());
+    const [lines, setLines] = useState<CartLine[]>([]);
+    const [isCartHydrated, setIsCartHydrated] = useState(false);
     const [cartOpen, setCartOpen] = useState(false);
 
     useEffect(() => {
+        setLines(readStoredCart());
+        setIsCartHydrated(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isCartHydrated) {
+            return;
+        }
+
         writeStoredCart(lines);
-    }, [lines]);
+    }, [lines, isCartHydrated]);
 
     const itemCount = useMemo(
         () => lines.reduce((sum, line) => sum + line.quantity, 0),

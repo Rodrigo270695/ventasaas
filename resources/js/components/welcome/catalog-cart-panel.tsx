@@ -7,6 +7,7 @@ import {
     Trash2,
     X,
 } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { formatCatalogPrice } from '@/lib/whatsapp-order';
 import { cn } from '@/lib/utils';
@@ -41,45 +42,54 @@ export function CatalogCartPanel({
     onRemoveLine,
     onClear,
 }: Props) {
+    useEffect(() => {
+        if (!open) {
+            (document.activeElement as HTMLElement | null)?.blur();
+        }
+    }, [open]);
+
+    const handleClose = () => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        onOpenChange(false);
+    };
+
     return (
         <>
-            <div
-                className={cn(
-                    'fixed inset-0 z-40 bg-[#12061f]/55 backdrop-blur-md transition-opacity duration-300',
-                    open
-                        ? 'pointer-events-auto opacity-100'
-                        : 'pointer-events-none opacity-0',
-                )}
-                onClick={() => onOpenChange(false)}
-                aria-hidden={!open}
-            />
+            {open ? (
+                <div
+                    className="fixed inset-0 z-40 bg-[#1f2937]/40 backdrop-blur-sm transition-opacity duration-300"
+                    onClick={handleClose}
+                    aria-hidden="true"
+                />
+            ) : null}
 
             <aside
                 className={cn(
                     'fixed top-0 right-0 z-50 flex h-full w-full max-w-md flex-col',
-                    'bg-[#fcfbff] shadow-[-24px_0_80px_-20px_rgba(46,16,101,0.35)]',
+                    'bg-white shadow-[-24px_0_80px_-20px_rgba(0,0,0,0.15)]',
                     'transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
                     open ? 'translate-x-0' : 'translate-x-full',
                 )}
-                aria-hidden={!open}
+                inert={!open}
+                role="dialog"
+                aria-modal={open}
                 aria-label="Carrito de compras"
             >
-                <div className="relative overflow-hidden border-b border-violet-100 px-5 py-5">
-                    <div className="absolute inset-0 bg-linear-to-br from-[#2e1065] via-[#5b21b6] to-[#7c3aed]" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(236,72,153,0.35),transparent_55%)]" />
+                <div className="relative overflow-hidden border-b border-[#e5e7eb] px-5 py-5">
+                    <div className="absolute inset-0 bg-linear-to-br from-[#fff7ed] to-[#ffedd5]" />
                     <div className="relative flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-white backdrop-blur-sm">
+                            <div className="flex size-11 items-center justify-center rounded-2xl bg-white text-[#f97316] shadow-sm">
                                 <ShoppingCart className="size-5" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#9ca3af]">
                                     Tu selección
                                 </p>
-                                <h2 className="text-xl font-bold text-white">
+                                <h2 className="text-xl font-bold text-[#1f2937]">
                                     Carrito
                                 </h2>
-                                <p className="text-xs text-violet-100/85">
+                                <p className="text-xs text-[#6b7280]">
                                     {itemCount}{' '}
                                     {itemCount === 1
                                         ? 'producto'
@@ -92,8 +102,8 @@ export function CatalogCartPanel({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-10 cursor-pointer rounded-2xl text-white hover:bg-white/10"
-                            onClick={() => onOpenChange(false)}
+                            className="size-10 cursor-pointer rounded-2xl text-[#374151] hover:bg-white/60"
+                            onClick={handleClose}
                             aria-label="Cerrar carrito"
                         >
                             <X className="size-4" />
@@ -103,14 +113,14 @@ export function CatalogCartPanel({
 
                 <div className="flex-1 overflow-y-auto px-5 py-5">
                     {lines.length === 0 ? (
-                        <div className="flex h-full flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-violet-200 bg-linear-to-b from-violet-50/80 to-white px-6 py-14 text-center">
-                            <div className="flex size-16 items-center justify-center rounded-[1.25rem] bg-violet-100 text-[#7c3aed]">
+                        <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#e5e7eb] bg-[#f9fafb] px-6 py-14 text-center">
+                            <div className="flex size-16 items-center justify-center rounded-2xl bg-[#fff7ed] text-[#f97316]">
                                 <Sparkles className="size-7" />
                             </div>
-                            <p className="mt-4 text-lg font-bold text-[#4c1d95]">
+                            <p className="mt-4 text-lg font-bold text-[#1f2937]">
                                 Arma tu pedido
                             </p>
-                            <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#7c6f8a]">
+                            <p className="mt-2 max-w-xs text-sm leading-relaxed text-[#6b7280]">
                                 Explora el catálogo, agrega tus productos
                                 favoritos y confírmalo por WhatsApp.
                             </p>
@@ -120,19 +130,19 @@ export function CatalogCartPanel({
                             {lines.map((line) => (
                                 <li
                                     key={line.key}
-                                    className="rounded-[1.35rem] border border-violet-100 bg-white p-4 shadow-[0_10px_30px_-24px_rgba(76,29,149,0.55)]"
+                                    className="rounded-2xl border border-[#e5e7eb] bg-[#f9fafb] p-4"
                                 >
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <p className="font-bold text-[#2e1065]">
+                                            <p className="font-bold text-[#1f2937]">
                                                 {line.productName}
                                             </p>
                                             {line.variantLabel ? (
-                                                <p className="mt-0.5 text-xs font-medium text-[#7c6f8a]">
+                                                <p className="mt-0.5 text-xs font-medium text-[#6b7280]">
                                                     {line.variantLabel}
                                                 </p>
                                             ) : null}
-                                            <p className="mt-1 font-mono text-[11px] text-[#b8aecf]">
+                                            <p className="mt-1 font-mono text-[11px] text-[#9ca3af]">
                                                 {line.sku}
                                             </p>
                                         </div>
@@ -151,7 +161,7 @@ export function CatalogCartPanel({
                                     </div>
 
                                     <div className="mt-4 flex items-center justify-between gap-3">
-                                        <div className="flex items-center gap-1 rounded-2xl border border-violet-200 bg-violet-50/60 p-1">
+                                        <div className="flex items-center gap-1 rounded-2xl border border-[#e5e7eb] bg-white p-1">
                                             <Button
                                                 type="button"
                                                 variant="ghost"
@@ -167,7 +177,7 @@ export function CatalogCartPanel({
                                             >
                                                 <Minus className="size-3.5" />
                                             </Button>
-                                            <span className="min-w-8 text-center text-sm font-bold tabular-nums text-[#4c1d95]">
+                                            <span className="min-w-8 text-center text-sm font-bold tabular-nums text-[#1f2937]">
                                                 {line.quantity}
                                             </span>
                                             <Button
@@ -186,7 +196,7 @@ export function CatalogCartPanel({
                                                 <Plus className="size-3.5" />
                                             </Button>
                                         </div>
-                                        <p className="text-base font-black tabular-nums text-[#4c1d95]">
+                                        <p className="text-base font-black tabular-nums text-[#1f2937]">
                                             {formatCatalogPrice(
                                                 String(
                                                     Number(line.unitPrice) *
@@ -202,13 +212,13 @@ export function CatalogCartPanel({
                     )}
                 </div>
 
-                <div className="border-t border-violet-100 bg-white px-5 py-5">
-                    <div className="mb-4 rounded-[1.25rem] bg-violet-50/80 px-4 py-3">
+                <div className="border-t border-[#e5e7eb] bg-white px-5 py-5">
+                    <div className="mb-4 rounded-2xl bg-[#f9fafb] px-4 py-3">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-[#6b5b7a]">
+                            <span className="text-sm font-semibold text-[#6b7280]">
                                 Total estimado
                             </span>
-                            <span className="text-2xl font-black tabular-nums text-[#4c1d95]">
+                            <span className="text-2xl font-black tabular-nums text-[#1f2937]">
                                 {formatCatalogPrice(String(total), currencyCode)}
                             </span>
                         </div>
@@ -248,7 +258,7 @@ export function CatalogCartPanel({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="h-11 cursor-pointer rounded-2xl border-violet-200 text-[#6d28d9] hover:bg-violet-50"
+                                className="h-11 cursor-pointer rounded-2xl border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]"
                                 onClick={onClear}
                             >
                                 Vaciar carrito

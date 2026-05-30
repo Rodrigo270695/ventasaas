@@ -6,14 +6,14 @@ type Props = {
 
 export function WelcomeCatalogEmptyState({ hasProducts }: Props) {
     return (
-        <div className="mt-8 rounded-[1.75rem] border-[3px] border-dashed border-[#fbcfe8] bg-white/90 px-6 py-20 text-center">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-[#fce7f3] text-[#f472b6]">
-                <Store className="size-8" />
+        <div className="rounded-2xl border border-dashed border-[#e5e7eb] bg-white px-6 py-16 text-center">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#fff7ed] text-[#f97316]">
+                <Store className="size-7" />
             </div>
-            <p className="mt-5 text-xl font-black text-[#831843]">
+            <p className="mt-4 text-lg font-bold text-[#1f2937]">
                 No hay productos para mostrar
             </p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[#be185d]/80">
+            <p className="mx-auto mt-2 max-w-md text-sm text-[#6b7280]">
                 {hasProducts
                     ? 'Prueba otra categoría o limpia la búsqueda.'
                     : 'Activa productos con precio en el panel de administración.'}
