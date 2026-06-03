@@ -55,7 +55,11 @@ class StockMovementService
             $delta = bcsub($target, $current, 4);
 
             if (bccomp($delta, '0', 4) === 0) {
-                throw new InvalidArgumentException('La cantidad indicada es igual al stock actual.');
+                if ($unitCostForIncrease !== null && bccomp($unitCostForIncrease, '0', 6) === 1) {
+                    return $this->recordCostUpdate($balance, $warehouse, $variant, $unitCostForIncrease, $notes, $createdBy);
+                }
+
+                throw new InvalidArgumentException('La cantidad indicada es igual al stock actual. Si solo quieres registrar un costo, ingresa el costo unitario.');
             }
 
             $movementType = bccomp($current, '0', 4) === 0 && bccomp($delta, '0', 4) === 1
@@ -115,6 +119,40 @@ class StockMovementService
 
             return $movement->load('lines');
         });
+    }
+
+    private function recordCostUpdate(
+        StockBalance $balance,
+        Warehouse $warehouse,
+        ProductVariant $variant,
+        string $unitCost,
+        ?string $notes,
+        ?int $createdBy,
+    ): StockMovement {
+        $normalizedCost = $this->normalizeDecimal($unitCost, 6);
+
+        $balance->avg_cost = $normalizedCost;
+        $balance->save();
+
+        $movement = StockMovement::query()->create([
+            'warehouse_id' => $warehouse->id,
+            'movement_type' => StockMovement::TYPE_COST_UPDATE,
+            'document_number' => $this->nextDocumentNumber(),
+            'movement_date' => now(),
+            'status' => StockMovement::STATUS_POSTED,
+            'notes' => $notes,
+            'created_by' => $createdBy,
+        ]);
+
+        StockMovementLine::query()->create([
+            'stock_movement_id' => $movement->id,
+            'product_variant_id' => $variant->id,
+            'quantity' => '0.0000',
+            'unit_cost' => $normalizedCost,
+            'total_cost' => '0.000000',
+        ]);
+
+        return $movement->load('lines');
     }
 
     private function weightedAverageCost(

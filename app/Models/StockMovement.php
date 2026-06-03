@@ -27,6 +27,8 @@ class StockMovement extends Model
 
     public const TYPE_BREAKDOWN = 'breakdown';
 
+    public const TYPE_COST_UPDATE = 'cost_update';
+
     public const STATUS_POSTED = 'posted';
 
     public const STATUS_CANCELLED = 'cancelled';

@@ -194,6 +194,7 @@ class StockMovementController extends Controller
             StockMovement::TYPE_TRANSFER_OUT => 'Traslado salida',
             StockMovement::TYPE_TRANSFER_IN => 'Traslado ingreso',
             StockMovement::TYPE_BREAKDOWN => 'Desglose',
+            StockMovement::TYPE_COST_UPDATE => 'Registro de costo',
             default => $type ?? '—',
         };
     }

@@ -374,7 +374,7 @@ export function StockAdjustFormModal({
                                     inputMode="decimal"
                                     step="0.01"
                                     placeholder="0.00"
-                                    hint="Obligatorio si subes la cantidad. Sirve de base para recalcular precios."
+                                    hint="Obligatorio si subes la cantidad. Si el stock no cambia (ej. está en 0), puedes ingresar solo el costo para registrarlo."
                                     error={message('unit_cost', formErrors)}
                                     disabled={processing || loadingBalance}
                                 />

@@ -28,7 +28,9 @@ function TypeBadge({ label, type }: { label: string; type: string | null }) {
                   : type === 'transfer_out' || type === 'transfer_in'
                     ? 'bg-blue-50 text-blue-800 ring-blue-200/80'
                     : type === 'breakdown'
-                      ? 'bg-pink-50 text-pink-800 ring-pink-200/80'
+                    ? 'bg-pink-50 text-pink-800 ring-pink-200/80'
+                    : type === 'cost_update'
+                      ? 'bg-orange-50 text-orange-800 ring-orange-200/80'
                       : 'bg-slate-50 text-slate-700 ring-slate-200/80';
 
     return (
