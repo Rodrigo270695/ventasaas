@@ -337,11 +337,11 @@ export function StockAdjustFormModal({
                                             'flex-1 py-1.5 text-xs font-semibold transition-colors',
                                             adjustmentType === opt.value
                                                 ? opt.value === 'in'
-                                                    ? 'bg-emerald-600 text-white'
+                                                    ? 'cursor-pointer bg-emerald-600 text-white'
                                                     : opt.value === 'out'
-                                                      ? 'bg-rose-500 text-white'
-                                                      : 'bg-violet-600 text-white'
-                                                : 'text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed',
+                                                      ? 'cursor-pointer bg-rose-500 text-white'
+                                                      : 'cursor-pointer bg-violet-600 text-white'
+                                                : 'cursor-pointer text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed',
                                         )}
                                     >
                                         {opt.label}
