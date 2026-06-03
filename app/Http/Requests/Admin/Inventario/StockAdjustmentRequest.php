@@ -35,11 +35,20 @@ class StockAdjustmentRequest extends FormRequest
             )
             : Rule::exists('product_variants', 'id');
 
+        $adjustmentType = $this->input('adjustment_type', 'set');
+        $unitCostRule = $adjustmentType === 'in' ? 'required' : 'nullable';
+
         return [
             'warehouse_id' => ['required', 'uuid', Rule::exists('warehouses', 'id')],
             'product_variant_id' => ['required', 'uuid', $variantRule],
-            'quantity_on_hand' => ['required', 'numeric', 'min:0', 'max:999999999.9999'],
-            'unit_cost' => ['nullable', 'numeric', 'min:0', 'max:999999999.999999'],
+            'adjustment_type' => ['required', Rule::in(['in', 'out', 'set'])],
+            'quantity_on_hand' => [
+                'required',
+                'numeric',
+                $adjustmentType !== 'set' ? 'min:0.0001' : 'min:0',
+                'max:999999999.9999',
+            ],
+            'unit_cost' => [$unitCostRule, 'numeric', 'min:0', 'max:999999999.999999'],
             'notes' => ['nullable', 'string', 'max:500'],
             'sync_sale_prices' => ['sometimes', 'boolean'],
             'price_list_ids' => ['required_if:sync_sale_prices,1,true', 'array', 'min:1'],
@@ -57,6 +66,10 @@ class StockAdjustmentRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if (! $this->has('adjustment_type')) {
+            $this->merge(['adjustment_type' => 'set']);
+        }
+
         if ($this->has('sync_sale_prices')) {
             $this->merge([
                 'sync_sale_prices' => $this->boolean('sync_sale_prices'),
@@ -72,7 +85,8 @@ class StockAdjustmentRequest extends FormRequest
         return [
             'warehouse_id' => 'almacén',
             'product_variant_id' => 'variante',
-            'quantity_on_hand' => 'cantidad en stock',
+            'adjustment_type' => 'tipo de ajuste',
+            'quantity_on_hand' => 'cantidad',
             'unit_cost' => 'costo unitario',
             'notes' => 'notas',
             'price_list_ids' => 'listas de precios',

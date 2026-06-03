@@ -44,8 +44,11 @@ export type StockBalanceStatItem = StatBadgeItem & {
     key: StockBalanceStatKey;
 };
 
+export type StockAdjustmentType = 'in' | 'out' | 'set';
+
 export type StockAdjustOldForm = {
     product_variant_id: string;
+    adjustment_type: StockAdjustmentType;
     quantity_on_hand: string;
     unit_cost: string;
     notes: string;

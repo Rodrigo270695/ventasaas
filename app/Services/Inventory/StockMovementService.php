@@ -121,6 +121,100 @@ class StockMovementService
         });
     }
 
+    /**
+     * Suma o resta una cantidad de forma incremental (entrada / salida manual).
+     *
+     * @param  'in'|'out'  $direction
+     */
+    public function adjustByDelta(
+        Warehouse $warehouse,
+        ProductVariant $variant,
+        string $direction,
+        string $quantity,
+        ?string $unitCost = null,
+        ?string $notes = null,
+        ?int $createdBy = null,
+    ): StockMovement {
+        $qty = $this->toDecimal($quantity);
+
+        if (bccomp($qty, '0', 4) !== 1) {
+            throw new InvalidArgumentException('La cantidad debe ser mayor a cero.');
+        }
+
+        return DB::transaction(function () use ($warehouse, $variant, $direction, $qty, $unitCost, $notes, $createdBy) {
+            $balance = StockBalance::query()->firstOrCreate(
+                [
+                    'warehouse_id' => $warehouse->id,
+                    'product_variant_id' => $variant->id,
+                ],
+                [
+                    'quantity_on_hand' => '0',
+                    'quantity_reserved' => '0',
+                    'avg_cost' => '0',
+                ],
+            );
+
+            $current = $this->normalizeDecimal((string) $balance->quantity_on_hand);
+
+            if ($direction === 'in') {
+                $incomingCost = $unitCost ?? '0';
+
+                if (bccomp($incomingCost, '0', 6) !== 1) {
+                    throw new InvalidArgumentException('Indica el costo unitario para el ingreso de stock.');
+                }
+
+                $incomingCost = $this->normalizeDecimal($incomingCost, 6);
+
+                $balance->avg_cost = $this->weightedAverageCost(
+                    $current,
+                    (string) $balance->avg_cost,
+                    $qty,
+                    $incomingCost,
+                );
+                $balance->quantity_on_hand = bcadd($current, $qty, 4);
+
+                $lineQty = $qty;
+                $lineUnitCost = $incomingCost;
+                $movementType = bccomp($current, '0', 4) === 0
+                    ? StockMovement::TYPE_OPENING
+                    : StockMovement::TYPE_ADJUSTMENT;
+            } else {
+                if (bccomp($current, $qty, 4) === -1) {
+                    throw new InvalidArgumentException(
+                        'No hay stock suficiente para esta salida.',
+                    );
+                }
+
+                $balance->quantity_on_hand = bcsub($current, $qty, 4);
+                $lineQty = '-'.$qty;
+                $lineUnitCost = (string) $balance->avg_cost;
+                $movementType = StockMovement::TYPE_ADJUSTMENT;
+            }
+
+            $balance->save();
+
+            $movement = StockMovement::query()->create([
+                'warehouse_id' => $warehouse->id,
+                'movement_type' => $movementType,
+                'document_number' => $this->nextDocumentNumber(),
+                'movement_date' => now(),
+                'status' => StockMovement::STATUS_POSTED,
+                'notes' => $notes,
+                'created_by' => $createdBy,
+            ]);
+
+            StockMovementLine::query()->create([
+                'stock_movement_id' => $movement->id,
+                'product_variant_id' => $variant->id,
+                'quantity' => $lineQty,
+                'unit_cost' => $lineUnitCost,
+                'total_cost' => bcmul($lineQty, $lineUnitCost, 6),
+            ]);
+
+            return $movement->load('lines');
+        });
+    }
+
     private function recordCostUpdate(
         StockBalance $balance,
         Warehouse $warehouse,

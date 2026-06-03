@@ -31,14 +31,28 @@ class StockAdjustmentController extends Controller
             $warehouse = Warehouse::query()->findOrFail($data['warehouse_id']);
             $variant = ProductVariant::query()->findOrFail($data['product_variant_id']);
 
-            $this->stockMovementService->setQuantityOnHand(
-                $warehouse,
-                $variant,
-                (string) $data['quantity_on_hand'],
-                isset($data['unit_cost']) ? (string) $data['unit_cost'] : null,
-                $data['notes'] ?? null,
-                $request->user()?->id,
-            );
+            $adjustmentType = $data['adjustment_type'] ?? 'set';
+
+            if ($adjustmentType === 'set') {
+                $this->stockMovementService->setQuantityOnHand(
+                    $warehouse,
+                    $variant,
+                    (string) $data['quantity_on_hand'],
+                    isset($data['unit_cost']) ? (string) $data['unit_cost'] : null,
+                    $data['notes'] ?? null,
+                    $request->user()?->id,
+                );
+            } else {
+                $this->stockMovementService->adjustByDelta(
+                    $warehouse,
+                    $variant,
+                    $adjustmentType,
+                    (string) $data['quantity_on_hand'],
+                    isset($data['unit_cost']) ? (string) $data['unit_cost'] : null,
+                    $data['notes'] ?? null,
+                    $request->user()?->id,
+                );
+            }
         } catch (InvalidArgumentException $exception) {
             Toast::error($exception->getMessage());
 
@@ -75,14 +89,28 @@ class StockAdjustmentController extends Controller
                 ->where('product_id', $producto->id)
                 ->findOrFail($data['product_variant_id']);
 
-            $this->stockMovementService->setQuantityOnHand(
-                $warehouse,
-                $variant,
-                (string) $data['quantity_on_hand'],
-                isset($data['unit_cost']) ? (string) $data['unit_cost'] : null,
-                $data['notes'] ?? null,
-                $request->user()?->id,
-            );
+            $adjustmentType = $data['adjustment_type'] ?? 'set';
+
+            if ($adjustmentType === 'set') {
+                $this->stockMovementService->setQuantityOnHand(
+                    $warehouse,
+                    $variant,
+                    (string) $data['quantity_on_hand'],
+                    isset($data['unit_cost']) ? (string) $data['unit_cost'] : null,
+                    $data['notes'] ?? null,
+                    $request->user()?->id,
+                );
+            } else {
+                $this->stockMovementService->adjustByDelta(
+                    $warehouse,
+                    $variant,
+                    $adjustmentType,
+                    (string) $data['quantity_on_hand'],
+                    isset($data['unit_cost']) ? (string) $data['unit_cost'] : null,
+                    $data['notes'] ?? null,
+                    $request->user()?->id,
+                );
+            }
         } catch (InvalidArgumentException $exception) {
             Toast::error($exception->getMessage());
 

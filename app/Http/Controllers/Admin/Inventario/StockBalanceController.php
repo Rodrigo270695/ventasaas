@@ -228,6 +228,7 @@ class StockBalanceController extends Controller
             'openAdjustOnLoad' => $request->filled('adjust_variant'),
             'oldForm' => [
                 'product_variant_id' => old('product_variant_id', ''),
+                'adjustment_type' => old('adjustment_type', 'in'),
                 'quantity_on_hand' => old('quantity_on_hand', ''),
                 'unit_cost' => old('unit_cost', ''),
                 'notes' => old('notes', ''),
