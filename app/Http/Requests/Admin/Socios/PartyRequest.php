@@ -64,6 +64,7 @@ class PartyRequest extends FormRequest
                 'max:15',
                 Rule::unique('parties', 'document_number')
                     ->where('document_type', $documentType)
+                    ->whereNull('deleted_at')
                     ->ignore($socio?->id),
                 ...$this->documentNumberRules($documentType),
             ],
@@ -120,6 +121,7 @@ class PartyRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'document_number.unique' => 'Ya existe un socio activo con este número de documento. Busca al socio en el listado o actívalo si estaba desactivado.',
             'document_number.regex' => match ((string) $this->input('document_type')) {
                 Party::DOC_DNI => 'El DNI debe tener 8 dígitos.',
                 Party::DOC_RUC => 'El RUC debe tener 11 dígitos.',

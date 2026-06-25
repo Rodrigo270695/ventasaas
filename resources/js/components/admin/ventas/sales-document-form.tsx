@@ -468,6 +468,8 @@ type OrderSummaryAsideProps = {
     onDelete: () => void;
     onSaveDraft?: () => void;
     offlineSaving?: boolean;
+    lines: SalesDocumentLineForm[];
+    variantMap: Map<string, SalesVariantOption>;
 };
 
 function OrderSummaryAside({
@@ -494,12 +496,87 @@ function OrderSummaryAside({
     onDelete,
     onSaveDraft,
     offlineSaving = false,
+    lines,
+    variantMap,
 }: OrderSummaryAsideProps) {
     const discountAmount = parseFloat(globalDiscount || '0');
     const hasDiscount = !Number.isNaN(discountAmount) && discountAmount > 0;
 
+    const cartItems = lines.filter((l) => l.product_variant_id.trim() !== '');
+    const cartCount = cartItems.length;
+
     return (
         <aside className="flex w-full flex-col gap-3 lg:sticky lg:top-4 lg:w-62 lg:shrink-0">
+            {/* Carrito dinámico */}
+            <div className="overflow-hidden rounded-xl border border-violet-200/80 bg-white shadow-xs ring-1 ring-violet-100/50">
+                <div className="flex items-center justify-between border-b border-violet-100/90 px-4 py-2.5">
+                    <p className="text-[10px] font-bold tracking-wide text-[#7c3aed] uppercase">
+                        Carrito
+                    </p>
+                    <span
+                        className={cn(
+                            'flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums',
+                            cartCount > 0
+                                ? 'bg-violet-600 text-white'
+                                : 'bg-slate-100 text-slate-400',
+                        )}
+                    >
+                        {cartCount}
+                    </span>
+                </div>
+
+                {cartCount === 0 ? (
+                    <p className="px-4 py-4 text-center text-[11px] text-[#9d8fb0]">
+                        Sin productos aún
+                    </p>
+                ) : (
+                    <ul className="max-h-[260px] divide-y divide-violet-100/70 overflow-y-auto">
+                        {cartItems.map((line, i) => {
+                            const variant = variantMap.get(line.product_variant_id);
+                            const preview = calcLinePreview(
+                                line,
+                                variant?.igv_rate ?? '0.18',
+                            );
+                            const qty = parseFloat(line.quantity) || 0;
+                            const qtyLabel =
+                                qty % 1 === 0
+                                    ? qty.toFixed(0)
+                                    : qty.toFixed(2);
+
+                            return (
+                                <li
+                                    key={i}
+                                    className="flex items-start gap-2 px-3 py-2.5"
+                                >
+                                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded bg-violet-100 text-[9px] font-bold text-violet-700">
+                                        {i + 1}
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-[#3b2d4a]">
+                                            {variant?.label ?? '—'}
+                                        </p>
+                                        <p className="mt-0.5 text-[10px] text-[#9d8fb0]">
+                                            {qtyLabel} ×{' '}
+                                            {formatSalesMoney(
+                                                line.unit_price,
+                                                currencyCode,
+                                            )}
+                                        </p>
+                                    </div>
+                                    <span className="shrink-0 font-mono text-[11px] font-semibold tabular-nums text-[#5b21b6]">
+                                        {formatSalesMoney(
+                                            preview.line_total,
+                                            currencyCode,
+                                        )}
+                                    </span>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
+            </div>
+
+            {/* Resumen de totales */}
             <div className="rounded-xl border border-violet-200/80 bg-white p-4 shadow-xs ring-1 ring-violet-100/50">
                 <p className="text-[10px] font-bold tracking-wide text-[#7c3aed] uppercase">
                     Resumen
@@ -2152,6 +2229,8 @@ export function SalesDocumentForm({
                                         isOffline ? handleOfflineSaveDraft : undefined
                                     }
                                     offlineSaving={offlineSaving}
+                                    lines={form.lines}
+                                    variantMap={variantMap}
                                 />
                                 </div>
                             </div>

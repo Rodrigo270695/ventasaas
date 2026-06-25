@@ -66,9 +66,24 @@ class PartyController extends Controller
 
     public function store(PartyRequest $request): RedirectResponse
     {
-        $party = Party::create($request->validated());
+        $data = $request->validated();
 
-        Toast::success('Socio registrado correctamente.');
+        // Si existe un registro eliminado con el mismo documento, restaurarlo en lugar de crear duplicado
+        $trashed = Party::withTrashed()
+            ->where('document_type', $data['document_type'])
+            ->where('document_number', $data['document_number'])
+            ->whereNotNull('deleted_at')
+            ->first();
+
+        if ($trashed !== null) {
+            $trashed->restore();
+            $trashed->update(collect($data)->only($trashed->getFillable())->all());
+            $party = $trashed;
+            Toast::success('Socio reactivado y actualizado correctamente.');
+        } else {
+            $party = Party::create($data);
+            Toast::success('Socio registrado correctamente.');
+        }
 
         $returnUrl = $request->string('return_url')->toString();
 
