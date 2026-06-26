@@ -401,6 +401,25 @@ test('confirmed sales document can open thermal ticket print page', function () 
         );
 });
 
+test('thermal ticket defaults to 58mm format for narrow printers', function () {
+    $user = User::factory()->create();
+    $user->assignRole('admin');
+
+    $document = SalesDocument::factory()->confirmed()->create([
+        'full_number' => 'EB01-00000100',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.ventas.comprobantes.ticket', [
+            'comprobante' => $document,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/ventas/comprobantes/ticket')
+            ->where('format', '58mm')
+        );
+});
+
 test('cashier can create and confirm internal ticket without customer', function () {
     $user = User::factory()->create();
     $user->assignRole('cashier');

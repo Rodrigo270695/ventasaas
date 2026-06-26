@@ -315,7 +315,7 @@ class SalesDocumentController extends Controller
 
         $format = $request->string('format')->toString();
         if (! in_array($format, ['80mm', '58mm', 'a4'], true)) {
-            $format = '80mm';
+            $format = '58mm';
         }
 
         return Inertia::render('admin/ventas/comprobantes/ticket', [

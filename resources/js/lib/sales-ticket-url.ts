@@ -1,4 +1,9 @@
-export type SalesTicketFormat = '80mm' | '58mm' | 'a4';
+import {
+    readPreferredTicketFormat,
+    type SalesTicketFormat,
+} from '@/lib/sales-ticket-format';
+
+export type { SalesTicketFormat };
 
 export function salesTicketUrl(
     documentId: string,
@@ -9,7 +14,8 @@ export function salesTicketUrl(
     },
 ): string {
     const params = new URLSearchParams();
-    params.set('format', options?.format ?? '80mm');
+    const format = options?.format ?? readPreferredTicketFormat();
+    params.set('format', format);
 
     if (options?.auto) {
         params.set('auto', '1');

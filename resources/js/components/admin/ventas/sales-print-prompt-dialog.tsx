@@ -9,6 +9,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    persistPreferredTicketFormat,
+    readPreferredTicketFormat,
+    SALES_TICKET_FORMAT_OPTIONS,
+    type SalesTicketFormat,
+} from '@/lib/sales-ticket-format';
 import { salesTicketUrl } from '@/lib/sales-ticket-url';
 
 type Props = {
@@ -26,13 +32,18 @@ export function SalesPrintPromptDialog({
     fullNumber,
     internal = false,
 }: Props) {
-    const [format, setFormat] = useState<'80mm' | '58mm' | 'a4'>('80mm');
+    const [format, setFormat] = useState<SalesTicketFormat>('58mm');
 
     useEffect(() => {
         if (open) {
-            setFormat('80mm');
+            setFormat(readPreferredTicketFormat());
         }
     }, [open]);
+
+    const handleFormatChange = (next: SalesTicketFormat) => {
+        setFormat(next);
+        persistPreferredTicketFormat(next);
+    };
 
     const printUrl = salesTicketUrl(documentId, {
         format,
@@ -50,23 +61,17 @@ export function SalesPrintPromptDialog({
                             : '¿Imprimir comprobante?'}
                     </DialogTitle>
                     <DialogDescription className="text-[#7c6f8a]">
-                        {fullNumber} fue confirmado. Elige el formato de
-                        impresión para tu ticketera o impresora.
+                        {fullNumber} fue confirmado. Para ticketeras de 56 mm
+                        usa el formato <strong>56 / 58 mm</strong>.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="grid grid-cols-3 gap-2">
-                    {(
-                        [
-                            { key: '80mm', label: '80 mm', hint: 'Recomendado' },
-                            { key: '58mm', label: '58 mm', hint: 'Compacto' },
-                            { key: 'a4', label: 'A4', hint: 'Oficina' },
-                        ] as const
-                    ).map((item) => (
+                    {SALES_TICKET_FORMAT_OPTIONS.map((item) => (
                         <button
                             key={item.key}
                             type="button"
-                            onClick={() => setFormat(item.key)}
+                            onClick={() => handleFormatChange(item.key)}
                             className={
                                 format === item.key
                                     ? 'cursor-pointer rounded-xl border-2 border-[#7c3aed] bg-violet-50 px-2 py-3 text-center ring-2 ring-violet-200/60'
